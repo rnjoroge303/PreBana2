@@ -1,0 +1,296 @@
+*{
+    box-sizing: border-box;
+}
+:root{
+    --auth-ink: #4a2633;
+    --auth-muted: #987985;
+    --auth-paper: #fff8fb;
+    --auth-rose: #ad5b78;
+    --auth-accent: #ad5b78;
+    --auth-border: #efd4df;
+    --auth-error: #a34242;
+}
+body{
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background: var(--auth-paper);
+    color: var(--auth-ink);
+    font-family: "DM Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+a{
+    color: inherit;
+}
+.authShell{
+    display: grid;
+    width: min(1100px, calc(100% - 48px));
+    min-height: min(700px, calc(100vh - 64px));
+    grid-template-columns: 1fr 0.88fr;
+    overflow: hidden;
+    margin: 32px auto;
+    border: 1px solid var(--auth-border);
+    border-radius: 11px;
+    background: white;
+    box-shadow: 0 24px 75px rgb(74 38 51 / 8%);
+}
+.authVisual{
+    position: relative;
+    display: flex;
+    min-height: 600px;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: 30px 34px;
+    background: #91415e;
+    color: white;
+}
+.clientAuth .authVisual{
+    background-color: #91415e;
+    background-image: linear-gradient(180deg, rgb(74 38 51 / 14%), rgb(74 38 51 / 82%)), url("https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1200&q=82");
+    background-position: center;
+    background-size: cover;
+}
+.adminAuth .authVisual{
+    background-color: #91415e;
+    background-image: radial-gradient(rgb(255 227 237 / 15%) 1px, transparent 1px), linear-gradient(145deg, #91415e, #ad5b78);
+    background-size: 18px 18px, auto;
+}
+.authBrand{
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 11px;
+    color: white;
+    text-decoration: none;
+}
+.authBrandMark{
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border-radius: 12px 12px 12px 4px;
+    background: #c77f98;
+    font-family: "Playfair Display", serif;
+    font-size: 1.4rem;
+}
+.authBrand > span:last-child{
+    display: grid;
+    gap: 2px;
+}
+.authBrand strong{
+    font-family: "Playfair Display", serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+.authBrand small{
+    color: #f8e6ed;
+    font-size: 0.57rem;
+}
+.authVisualCopy{
+    position: relative;
+    z-index: 1;
+    max-width: 470px;
+    padding: 24px 0;
+}
+.authVisualCopy p{
+    margin: 0 0 16px;
+    color: #e8b8c5;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+.authVisualCopy h1{
+    margin: 0;
+    font-family: "Playfair Display", serif;
+    font-size: clamp(2.4rem, 4vw, 3.5rem);
+    font-weight: 500;
+    line-height: 1.12;
+}
+.authVisualCopy > span{
+    display: block;
+    max-width: 350px;
+    margin-top: 17px;
+    color: #f8e6ed;
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+.authVisualFoot{
+    position: relative;
+    z-index: 1;
+    color: #f8e6ed;
+    font-size: 0.65rem;
+}
+.authFormPanel{
+    display: flex;
+    flex-direction: column;
+    padding: 28px clamp(26px, 4vw, 52px) 22px;
+}
+.authBack{
+    align-self: flex-start;
+    color: var(--auth-muted);
+    font-size: 0.75rem;
+    text-decoration: none;
+}
+.authBack:hover,
+.authSwitch a:hover{
+    color: var(--auth-rose);
+}
+.authFormWrap{
+    width: 100%;
+    max-width: 370px;
+    margin: auto;
+    padding: 32px 0;
+}
+.authEyebrow{
+    margin: 0 0 8px;
+    color: var(--auth-rose);
+    font-size: 0.64rem;
+    font-weight: 700;
+}
+.authFormWrap h2{
+    margin: 0;
+    color: var(--auth-ink);
+    font-family: "Manrope", sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+.authIntro{
+    margin: 9px 0 21px;
+    color: var(--auth-muted);
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+.authError{
+    margin: 0 0 15px;
+    padding: 10px 12px;
+    border: 1px solid #efcece;
+    border-radius: 5px;
+    background: #fcf4f3;
+    color: var(--auth-error);
+    font-size: 0.72rem;
+    line-height: 1.5;
+}
+.authForm{
+    display: grid;
+    gap: 8px;
+}
+.authForm label{
+    margin-top: 6px;
+    color: var(--auth-ink);
+    font-size: 0.71rem;
+    font-weight: 600;
+}
+.authForm input{
+    width: 100%;
+    min-height: 43px;
+    padding: 0 12px;
+    border: 1px solid var(--auth-border);
+    border-radius: 5px;
+    outline: none;
+    background: #fff;
+    color: var(--auth-ink);
+    font: inherit;
+    font-size: 0.77rem;
+}
+.authForm input:focus{
+    border-color: var(--auth-rose);
+    box-shadow: 0 0 0 3px rgb(173 91 120 / 12%);
+}
+.authForm input::placeholder{
+    color: #a3ada7;
+}
+.authSubmit{
+    display: flex;
+    min-height: 45px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 5px;
+    background: var(--auth-accent);
+    color: white;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+.authSubmit:hover{
+    background: #91415e;
+}
+.authSubmit span{
+    font-size: 1rem;
+    font-weight: 400;
+}
+.authSwitch{
+    margin: 18px 0 0;
+    color: var(--auth-muted);
+    font-size: 0.72rem;
+    text-align: center;
+}
+.authSwitch a{
+    color: var(--auth-accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+.authSecurityNote{
+    margin: 19px 0 0;
+    padding-top: 13px;
+    border-top: 1px solid var(--auth-border);
+    color: var(--auth-muted);
+    font-size: 0.67rem;
+    line-height: 1.6;
+}
+.authFooter{
+    padding-top: 15px;
+    border-top: 1px solid var(--auth-border);
+    color: var(--auth-muted);
+    font-size: 0.64rem;
+}
+@media (max-width: 760px){
+    .authShell{
+        width: min(480px, calc(100% - 24px));
+        min-height: calc(100vh - 24px);
+        grid-template-columns: minmax(0, 1fr);
+        margin: 12px auto;
+    }
+    .authVisual{
+        min-height: 220px;
+        padding: 20px 22px;
+    }
+    .authVisualCopy{
+        padding: 18px 0 4px;
+    }
+    .authVisualCopy p{
+        margin-bottom: 8px;
+        font-size: 0.6rem;
+    }
+    .authVisualCopy h1{
+        font-size: 2rem;
+    }
+    .authVisualCopy > span,
+    .authVisualFoot{
+        display: none;
+    }
+    .authFormPanel{
+        min-height: 390px;
+        padding: 19px 22px 16px;
+    }
+    .authFormWrap{
+        padding: 28px 0;
+    }
+}
+@media (prefers-reduced-motion: reduce){
+    *,
+    *::before,
+    *::after{
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}

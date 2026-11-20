@@ -1,0 +1,86 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run PreBana Store",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"index.js"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run PreBana CRUD Preview",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"-e",
+				"process.env.PORT='8081'; require('./index.js')"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install auth dependencies",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+				"install",
+				"bcryptjs",
+				"jsonwebtoken"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Move dotenv to runtime dependencies",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+				"install",
+				"dotenv",
+				"--save-prod"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run PreBana Auth Preview",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"-e",
+				"process.env.PORT='8082'; require('./index.js')"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Audit production dependencies",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+				"audit",
+				"--omit=dev"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run PreBana Checkout Preview",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"-e",
+				"process.env.PORT='8083'; require('./index.js')"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}
