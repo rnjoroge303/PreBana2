@@ -1,0 +1,22 @@
+<div class="panelIntro">
+	<div><p class="panelEyebrow">CATALOG</p><h2>Products</h2><p class="panelDescription">Keep your collections and product details up to date.</p></div>
+	<a class="primaryAction" href="#product" data-panel-link="product"><span aria-hidden="true">+</span> Add product</a>
+</div>
+<p class="catalogFeedback" id="catalogFeedback" role="status" aria-live="polite"></p>
+<div class="adminCard tableCard">
+	<div class="tableToolbar"><div><h3>All products</h3><p id="catalogCount"><%= products.length %> <%= products.length === 1 ? "product" : "products" %> in your catalog</p></div><span class="tableStatus"><span></span> Active catalog</span></div>
+	<div class="tableScroll">
+		<table class="dataTable">
+			<thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+			<tbody id="productTableBody">
+				<% products.forEach((product) => { %>
+					<tr data-product-row="<%= product.id %>"><td><span class="tableProduct"><span class="productThumb thumbGreen"><%= product.name.slice(0, 1).toUpperCase() %></span><span><strong><%= product.name %></strong><small><%= product.id %></small></span></span></td><td><%= product.category %></td><td>KSh <%= Number(product.price).toLocaleString("en-KE") %></td><td><%= product.stock %></td><td><span class="statusPill <%= product.stock <= 5 ? "statusLow" : "" %>"><%= product.stock <= 5 ? "Low stock" : "Active" %></span></td><td><div class="rowActions"><button class="rowAction" type="button" data-edit-product data-product="<%= JSON.stringify(product) %>" aria-label="Edit <%= product.name %>">Edit</button><button class="rowAction rowActionDanger" type="button" data-delete-product="<%= product.id %>" data-product-name="<%= product.name %>" aria-label="Delete <%= product.name %>">Delete</button></div></td></tr>
+				<% }); %>
+				<% if (!products.length) { %>
+					<tr id="emptyProductRow"><td colspan="6">No products yet. Add your first product to start the catalog.</td></tr>
+				<% } %>
+			</tbody>
+		</table>
+	</div>
+</div>
+<p class="storageNote">Product records are stored in <code>src/data/data.json</code>. Uploaded images are saved under <code>public/uploads/products</code>.</p>

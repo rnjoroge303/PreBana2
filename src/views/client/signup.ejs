@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ad5b78">
+    <title>Create customer account | PreBana Cosmetics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Playfair+Display:wght@500;600;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/css/auth.css">
+</head>
+<body class="authPage clientAuth">
+    <main class="authShell">
+        <section class="authVisual" aria-label="PreBana Cosmetics">
+            <a class="authBrand" href="/pre/client/login"><span class="authBrandMark">P</span><span><strong>PreBana</strong><small>BOTANICAL BEAUTY</small></span></a>
+            <div class="authVisualCopy"><p>YOUR EVERYDAY, ELEVATED</p><h1>A softer kind<br>of self-care.</h1><span>Small rituals. Feel-good days.</span></div>
+            <span class="authVisualFoot">PREBANA COSMETICS <span aria-hidden="true">·</span> NAIROBI</span>
+        </section>
+        <section class="authFormPanel">
+            <a class="authBack" href="/pre/client/login">← Back to sign in</a>
+            <div class="authFormWrap">
+                <p class="authEyebrow">A LITTLE MORE YOU</p>
+                <h2>Create your account.</h2>
+                <p class="authIntro">Save your details and make your next visit feel like yours.</p>
+                <% if (error) { %><p class="authError" role="alert"><%= error %></p><% } %>
+                <form class="authForm" action="/pre/client/signup" method="post">
+                    <label for="email">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required placeholder="At least 12 characters">
+                    <label for="confirmPassword">Confirm password</label>
+                    <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="12" required placeholder="Enter your password again">
+                    <button class="authSubmit" type="submit">Create account <span aria-hidden="true">→</span></button>
+                </form>
+                <p class="authSwitch">Already have an account? <a href="/pre/client/login">Sign in</a></p>
+            </div>
+            <footer class="authFooter">Thoughtful beauty, chosen with care.</footer>
+        </section>
+    </main>
+</body>
+</html>

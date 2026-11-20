@@ -1,0 +1,73 @@
+<div class="panelIntro">
+	<div>
+		<p class="panelEyebrow">PERFORMANCE</p>
+		<h2>Reports</h2>
+		<p class="panelDescription">Store performance from confirmed payments and order records.</p>
+	</div>
+	<span class="secondaryAction staticAction">Last 30 days</span>
+</div>
+<div class="reportMetrics">
+	<article class="metricCard">
+		<div class="metricTop"><span>Confirmed revenue</span><span class="reportChange">
+				<%= reports.revenueChange===null ? "New" : `${reports.revenueChange> 0 ? "+" :
+					""}${reports.revenueChange}%` %>
+			</span></div><strong class="metricValue">KSh <%= Number(reports.revenue).toLocaleString("en-KE") %></strong>
+		<p>Compared with the previous 30 days</p>
+	</article>
+	<article class="metricCard">
+		<div class="metricTop"><span>Paid orders</span><span class="reportChange">
+				<%= reports.paidOrderCount %> paid
+			</span></div><strong class="metricValue">
+			<%= reports.placedOrderCount %>
+		</strong>
+		<p>Average paid order KSh <%= Number(reports.averageOrderValue).toLocaleString("en-KE", { maximumFractionDigits:
+				2 }) %>
+		</p>
+	</article>
+	<article class="metricCard">
+		<div class="metricTop"><span>Payment rate</span><span class="reportChange">
+				<%= reports.paidOrderCount %> paid
+			</span></div><strong class="metricValue">
+			<%= reports.paymentRate %>%
+		</strong>
+		<p>Paid orders among orders placed in this period</p>
+	</article>
+</div>
+<div class="dashboardGrid reportGrid">
+	<section class="adminCard reportChartCard" aria-labelledby="reportSalesTitle">
+		<div class="cardHeading">
+			<div>
+				<h2 id="reportSalesTitle">Revenue by week</h2>
+				<p>Confirmed payments over the last five weeks</p>
+			</div><span class="chartLegend"><span></span> Revenue</span>
+		</div>
+		<div class="reportBars" role="img" aria-label="Weekly confirmed sales for the last five weeks">
+			<% reports.weeklyRevenue.forEach((week)=> { %><div><span style="--bar:<%= week.height %>%"
+						title="KSh <%= Number(week.revenue).toLocaleString('en-KE') %>"></span><small>
+						<%= week.label %>
+					</small></div>
+				<% }); %>
+		</div>
+	</section>
+	<section class="adminCard categoryReport" aria-labelledby="categoryReportTitle">
+		<div class="cardHeading">
+			<div>
+				<h2 id="categoryReportTitle">Top categories</h2>
+				<p>Share of confirmed revenue</p>
+			</div>
+		</div>
+		<% if (reports.categoryRows.length) { %>
+			<div class="categoryRows">
+				<% reports.categoryRows.forEach((category)=> { %><div><span>
+							<%= category.name %>
+						</span><strong>
+							<%= category.share %>% · KSh <%= Number(category.revenue).toLocaleString("en-KE") %>
+						</strong><i style="--share:<%= category.share %>%"></i></div>
+					<% }); %>
+			</div>
+			<% } else { %>
+				<p class="panelDescription">No confirmed sales to report for this period.</p>
+				<% } %>
+	</section>
+</div>
+<p class="storageNote">Revenue includes paid orders only. Unconfirmed, failed, and cancelled payments are excluded.</p>

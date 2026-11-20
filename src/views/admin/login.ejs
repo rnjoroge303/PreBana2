@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ad5b78">
+    <title>Admin sign in | PreBana Cosmetics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/css/auth.css">
+</head>
+<body class="authPage adminAuth">
+    <main class="authShell">
+        <section class="authVisual" aria-label="PreBana admin">
+            <a class="authBrand" href="/pre/admin/login"><span class="authBrandMark">P</span><span><strong>PreBana</strong><small>ADMIN STUDIO</small></span></a>
+            <div class="authVisualCopy"><p>PREBANA COSMETICS</p><h1>Run your store<br>with clarity.</h1><span>Catalog, customers, and store activity in one place.</span></div>
+            <span class="authVisualFoot">ADMINISTRATOR ACCESS <span aria-hidden="true">·</span> NAIROBI</span>
+        </section>
+        <section class="authFormPanel">
+            <a class="authBack" href="/pre/store">← Back to storefront</a>
+            <div class="authFormWrap">
+                <p class="authEyebrow">ADMINISTRATOR ACCESS</p>
+                <h2>Sign in to your store.</h2>
+                <p class="authIntro">Use your administrator account to manage PreBana.</p>
+                <% if (error) { %><p class="authError" role="alert"><%= error %></p><% } %>
+                <form class="authForm" action="/pre/admin/login" method="post">
+                    <label for="email">Admin email</label>
+                    <input id="email" name="email" type="email" autocomplete="username" required placeholder="admin@example.com">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password">
+                    <button class="authSubmit" type="submit">Admin sign in <span aria-hidden="true">→</span></button>
+                </form>
+                <p class="authSecurityNote">Administrator accounts can only be created by a signed-in administrator.</p>
+            </div>
+            <footer class="authFooter">Secure store management.</footer>
+        </section>
+    </main>
+</body>
+</html>

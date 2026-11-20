@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="theme-color" content="#ad5b78">
+	<title>PreBana Admin | Dashboard</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/styles/css/admin.css">
+</head>
+<body>
+	<div class="adminShell">
+		<aside class="adminSidebar">
+			<a class="adminBrand" href="/pre/admin" aria-label="PreBana admin home">
+				<span class="adminBrandMark" aria-hidden="true">P</span>
+				<span><strong>PreBana</strong><small>ADMIN STUDIO</small></span>
+			</a>
+			<p class="navCaption">WORKSPACE</p>
+			<nav class="adminNav" aria-label="Admin navigation">
+				<a class="adminNavLink" href="#dashboard" data-panel-link="dashboard" aria-current="page">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"></rect><rect x="13" y="3" width="8" height="5" rx="1"></rect><rect x="13" y="10" width="8" height="11" rx="1"></rect><rect x="3" y="13" width="8" height="8" rx="1"></rect></svg>
+					<span>Overview</span>
+				</a>
+				<a class="adminNavLink" href="#products" data-panel-link="products">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5M3 16l9 5 9-5"></path></svg>
+					<span>Products</span>
+					<span class="navCount" id="catalogNavCount"><%= products.length %></span>
+				</a>
+				<a class="adminNavLink" href="#product" data-panel-link="product">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+					<span>Add product</span>
+				</a>
+				<a class="adminNavLink" href="#accounts" data-panel-link="accounts">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3 20a6 6 0 0 1 12 0M16 5.5a3 3 0 0 1 0 5.8M18 14a5 5 0 0 1 3 4.6"></path></svg>
+					<span>Customers</span>
+				</a>
+				<a class="adminNavLink" href="#reports" data-panel-link="reports">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19V5M4 19h17M8 15l4-4 3 2 5-6"></path></svg>
+					<span>Reports</span>
+				</a>
+			</nav>
+			<div class="sidebarBottom">
+				<div class="adminStatus"><span></span> Storefront online</div>
+				<a class="storeLink" href="/pre/store" target="_blank" rel="noreferrer">View storefront <span aria-hidden="true">↗</span></a>
+				<a class="storeLink" href="/pre/admin/signup">Add administrator <span aria-hidden="true">+</span></a>
+				<form class="adminLogoutForm" action="/pre/logout" method="post"><input type="hidden" name="role" value="admin"><button class="storeLink" type="submit">Sign out <span aria-hidden="true">↗</span></button></form>
+				<div class="adminProfile">
+					<span class="profileAvatar">P</span>
+					<span><strong>Store admin</strong><small>Administrator</small></span>
+					<span class="profileMenu" aria-hidden="true">···</span>
+				</div>
+			</div>
+		</aside>
+		<main class="adminMain">
+			<header class="adminTopbar">
+				<div class="breadcrumbs"><span>Workspace</span><span aria-hidden="true">/</span><strong id="breadcrumbCurrent">Overview</strong></div>
+				<div class="topbarMeta"><span class="dateLabel" id="todayLabel"></span><span class="topbarDivider"></span><span class="liveDot"></span><span>Live store</span></div>
+			</header>
+			<div class="adminContent">
+				<div class="pageHeading">
+					<div><p class="pageEyebrow">PREBANA COSMETICS</p><h1 id="viewTitle">Dashboard overview</h1></div>
+					<a class="primaryAction" href="#product" data-panel-link="product"><span aria-hidden="true">+</span> Add product</a>
+				</div>
+				<section class="adminPanel" id="dashboard" data-panel-view="dashboard" aria-labelledby="viewTitle">
+					<%- include("includes/dash") %>
+				</section>
+				<section class="adminPanel" id="products" data-panel-view="products" aria-labelledby="viewTitle" hidden>
+					<%- include("includes/products") %>
+				</section>
+				<section class="adminPanel" id="product" data-panel-view="product" aria-labelledby="viewTitle" hidden>
+					<%- include("includes/product") %>
+				</section>
+				<section class="adminPanel" id="accounts" data-panel-view="accounts" aria-labelledby="viewTitle" hidden>
+					<%- include("includes/acc") %>
+				</section>
+				<section class="adminPanel" id="reports" data-panel-view="reports" aria-labelledby="viewTitle" hidden>
+					<%- include("includes/report") %>
+				</section>
+			</div>
+		</main>
+	</div>
+	<script>
+		const panelTitles = {
+			dashboard: "Dashboard overview",
+			products: "Product catalog",
+			product: "Add a product",
+			accounts: "Customer accounts",
+			reports: "Store reports"
+		};
+		const panels = document.querySelectorAll("[data-panel-view]");
+		const panelLinks = document.querySelectorAll("[data-panel-link]");
+		const viewTitle = document.getElementById("viewTitle");
+		const breadcrumbCurrent = document.getElementById("breadcrumbCurrent");
+		const productTableBody = document.getElementById("productTableBody");
+		const adminProductForm = document.getElementById("adminProductForm");
+		const productFormTitle = document.getElementById("productFormTitle");
+		const productFormDescription = document.getElementById("productFormDescription");
+		const saveProductButton = document.getElementById("saveProductButton");
+		const cancelProductEdit = document.getElementById("cancelProductEdit");
+		const formFeedback = document.getElementById("formFeedback");
+		const customerSearch = document.getElementById("customerSearch");
+		const catalogFeedback = document.getElementById("catalogFeedback");
+		const productIdInput = document.getElementById("newProductId");
+		const imageInput = document.getElementById("productImages");
+		const imageUrlList = document.getElementById("imageUrlList");
+		const addImageUrlButton = document.getElementById("addImageUrl");
+		const imageCount = document.getElementById("imageCount");
+		const imageError = document.getElementById("imageError");
+		const imagePreviewGrid = document.getElementById("imagePreviewGrid");
+		const productCategoryNames = {
+			featured: "Featured",
+			hair: "Hair care",
+			face: "Face care",
+			body: "Body care",
+			baby: "Baby care",
+			nails: "Nails",
+			mens: "Men's care"
+		};
+		let editingProductId = null;
+		const initialProductId = productIdInput.value;
+
+		function createProductRow(product){
+			const row = document.createElement("tr");
+			const productCell = document.createElement("td");
+			const productLayout = document.createElement("span");
+			const thumb = document.createElement("span");
+			const productName = document.createElement("strong");
+			const productId = document.createElement("small");
+			const productDetails = document.createElement("span");
+
+			row.dataset.productRow = product.id;
+			productLayout.className = "tableProduct";
+			thumb.className = "productThumb thumbGreen";
+			thumb.textContent = product.name.slice(0, 1).toUpperCase();
+			productName.textContent = product.name;
+			productId.textContent = product.id;
+			productDetails.append(productName, productId);
+			productLayout.append(thumb, productDetails);
+			productCell.append(productLayout);
+
+			const categoryCell = document.createElement("td");
+			categoryCell.textContent = productCategoryNames[product.category] || "Other";
+			const priceCell = document.createElement("td");
+			priceCell.textContent = `KSh ${Number(product.price).toLocaleString("en-KE")}`;
+			const stockCell = document.createElement("td");
+			stockCell.textContent = product.stock;
+			const statusCell = document.createElement("td");
+			const status = document.createElement("span");
+			status.className = Number(product.stock) <= 5 ? "statusPill statusLow" : "statusPill";
+			status.textContent = Number(product.stock) <= 5 ? "Low stock" : "Active";
+			statusCell.append(status);
+
+			const actionsCell = document.createElement("td");
+			const actions = document.createElement("div");
+			const editButton = document.createElement("button");
+			const deleteButton = document.createElement("button");
+			actions.className = "rowActions";
+			editButton.className = "rowAction";
+			editButton.type = "button";
+			editButton.textContent = "Edit";
+			editButton.dataset.editProduct = "";
+			editButton.dataset.product = JSON.stringify(product);
+			editButton.setAttribute("aria-label", `Edit ${product.name}`);
+			deleteButton.className = "rowAction rowActionDanger";
+			deleteButton.type = "button";
+			deleteButton.textContent = "Delete";
+			deleteButton.dataset.deleteProduct = product.id;
+			deleteButton.dataset.productName = product.name;
+			deleteButton.setAttribute("aria-label", `Delete ${product.name}`);
+			actions.append(editButton, deleteButton);
+			actionsCell.append(actions);
+			row.append(productCell, categoryCell, priceCell, stockCell, statusCell, actionsCell);
+			return row;
+		}
+
+		function appendProductRow(product){
+			document.getElementById("emptyProductRow")?.remove();
+			productTableBody.append(createProductRow(product));
+		}
+
+		function replaceProductRow(product){
+			const existingRow = productTableBody.querySelector(`[data-product-row="${product.id}"]`);
+			if (existingRow){
+				existingRow.replaceWith(createProductRow(product));
+			} else {
+				appendProductRow(product);
+			}
+		}
+
+		function refreshProductCounts(total){
+			document.getElementById("catalogNavCount").textContent = total;
+			document.getElementById("catalogCount").textContent = `${total} products in your catalog`;
+			document.getElementById("dashboardProductCount").textContent = total;
+		}
+
+		function getImageUrlInputs(){
+			return [...imageUrlList.querySelectorAll('input[name="imageUrls"]')];
+		}
+
+		function updateImageCount(){
+			const urlInputs = getImageUrlInputs();
+			const urlCount = urlInputs.filter((input) => input.value.trim()).length;
+			const totalImages = imageInput.files.length + urlCount;
+			const occupiedSlots = imageInput.files.length + Math.max(urlCount, urlInputs.length);
+			imageCount.textContent = `${totalImages} / 6`;
+			addImageUrlButton.disabled = occupiedSlots >= 6;
+			imageError.hidden = totalImages <= 6;
+			imageError.textContent = totalImages > 6 ? "Choose or link no more than six images in total." : "";
+			return totalImages;
+		}
+
+		function addImageUrlRow(value = ""){
+			const urlInputs = getImageUrlInputs();
+			const rowNumber = urlInputs.length + 1;
+			const row = document.createElement("div");
+			const label = document.createElement("label");
+			const input = document.createElement("input");
+			const removeButton = document.createElement("button");
+
+			row.className = "imageUrlRow";
+			label.className = "fieldLabel";
+			label.htmlFor = `imageUrl${rowNumber}`;
+			label.append(`Image URL ${rowNumber}`);
+			input.className = "formControl";
+			input.id = `imageUrl${rowNumber}`;
+			input.name = "imageUrls";
+			input.type = "url";
+			input.placeholder = "https://example.com/product.jpg";
+			input.value = value;
+			label.append(input);
+			row.append(label);
+			if (rowNumber > 1){
+				removeButton.className = "removeImageUrl";
+				removeButton.type = "button";
+				removeButton.setAttribute("aria-label", `Remove image URL ${rowNumber}`);
+				removeButton.textContent = "×";
+				row.append(removeButton);
+			}
+			imageUrlList.append(row);
+		}
+
+		function renumberImageUrlRows(){
+			imageUrlList.querySelectorAll(".imageUrlRow").forEach((row, index) => {
+				const rowNumber = index + 1;
+				const label = row.querySelector("label");
+				const input = row.querySelector("input");
+				let removeButton = row.querySelector("button");
+
+				label.htmlFor = `imageUrl${rowNumber}`;
+				label.firstChild.nodeValue = `Image URL ${rowNumber}`;
+				input.id = `imageUrl${rowNumber}`;
+				if (rowNumber === 1 && removeButton){
+					removeButton.remove();
+				} else if (rowNumber > 1 && !removeButton){
+					removeButton = document.createElement("button");
+					removeButton.className = "removeImageUrl";
+					removeButton.type = "button";
+					removeButton.textContent = "×";
+					row.append(removeButton);
+				}
+				if (removeButton){
+					removeButton.setAttribute("aria-label", `Remove image URL ${rowNumber}`);
+				}
+			});
+		}
+
+		let previewObjectUrls = [];
+		function renderImagePreviews(){
+			previewObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+			previewObjectUrls = [];
+			imagePreviewGrid.replaceChildren();
+			const sources = [
+				...Array.from(imageInput.files, (file) => {
+					const url = URL.createObjectURL(file);
+					previewObjectUrls.push(url);
+					return { url, label: file.name };
+				}),
+				...getImageUrlInputs().filter((input) => input.value.trim()).map((input) => ({ url: input.value.trim(), label: input.value.trim() }))
+			];
+
+			sources.slice(0, 6).forEach((source) => {
+				const preview = document.createElement("div");
+				const image = document.createElement("img");
+				const label = document.createElement("span");
+				preview.className = "imagePreview";
+				image.src = source.url;
+				image.alt = "Product image preview";
+				label.textContent = source.label;
+				preview.append(image, label);
+				imagePreviewGrid.append(preview);
+			});
+		}
+
+		function showPanel(){
+			const requestedPanel = window.location.hash.slice(1);
+			const activePanel = panelTitles[requestedPanel] ? requestedPanel : "dashboard";
+
+			panels.forEach((panel) => {
+				panel.hidden = panel.dataset.panelView !== activePanel;
+			});
+			panelLinks.forEach((link) => {
+				if (link.dataset.panelLink === activePanel){
+					link.setAttribute("aria-current", "page");
+				} else {
+					link.removeAttribute("aria-current");
+				}
+			});
+
+			viewTitle.textContent = panelTitles[activePanel];
+			breadcrumbCurrent.textContent = activePanel === "dashboard" ? "Overview" : panelTitles[activePanel];
+		}
+
+		function showImageError(message){
+			imageError.textContent = message;
+			imageError.hidden = !message;
+		}
+
+		function setCatalogFeedback(message, isError = false){
+			catalogFeedback.textContent = message;
+			catalogFeedback.classList.toggle("catalogFeedbackError", isError);
+		}
+
+		function resetProductForm(){
+			editingProductId = null;
+			adminProductForm.reset();
+			productIdInput.value = initialProductId;
+			productFormTitle.textContent = "Add a product";
+			productFormDescription.textContent = "Create a new item for your PreBana collection.";
+			saveProductButton.innerHTML = 'Save product <span aria-hidden="true">→</span>';
+			cancelProductEdit.hidden = true;
+			imageUrlList.replaceChildren();
+			addImageUrlRow();
+			renderImagePreviews();
+			updateImageCount();
+			showImageError("");
+			formFeedback.textContent = "";
+			formFeedback.classList.remove("formFeedbackError");
+		}
+
+		function beginProductEdit(product){
+			editingProductId = product.id;
+			productIdInput.value = product.id;
+			adminProductForm.elements.name.value = product.name;
+			adminProductForm.elements.category.value = product.category;
+			adminProductForm.elements.price.value = product.price;
+			adminProductForm.elements.stock.value = product.stock;
+			adminProductForm.elements.description.value = product.description || "";
+			imageInput.value = "";
+			imageUrlList.replaceChildren();
+			(product.images || []).forEach((image) => addImageUrlRow(image.url));
+			if (!product.images || !product.images.length){
+				addImageUrlRow();
+			}
+			productFormTitle.textContent = "Edit product";
+			productFormDescription.textContent = `Update ${product.name} in your catalog.`;
+			saveProductButton.innerHTML = 'Save changes <span aria-hidden="true">→</span>';
+			cancelProductEdit.hidden = false;
+			renderImagePreviews();
+			updateImageCount();
+			showImageError("");
+			formFeedback.textContent = "";
+			formFeedback.classList.remove("formFeedbackError");
+			window.location.hash = "product";
+		}
+
+		document.getElementById("todayLabel").textContent = new Intl.DateTimeFormat("en-KE", {
+			weekday: "short",
+			day: "numeric",
+			month: "short",
+			year: "numeric"
+		}).format(new Date());
+		addImageUrlRow();
+		updateImageCount();
+		imageInput.addEventListener("change", () => {
+			updateImageCount();
+			renderImagePreviews();
+		});
+		addImageUrlButton.addEventListener("click", () => {
+			addImageUrlRow();
+			updateImageCount();
+		});
+		imageUrlList.addEventListener("input", () => {
+			updateImageCount();
+			renderImagePreviews();
+		});
+		imageUrlList.addEventListener("click", (event) => {
+			const removeButton = event.target.closest(".removeImageUrl");
+			if (!removeButton){
+				return;
+			}
+			removeButton.closest(".imageUrlRow").remove();
+			renumberImageUrlRows();
+			updateImageCount();
+			renderImagePreviews();
+		});
+		cancelProductEdit.addEventListener("click", () => {
+			resetProductForm();
+			window.location.hash = "products";
+		});
+		productTableBody.addEventListener("click", async (event) => {
+			const editButton = event.target.closest("[data-edit-product]");
+			if (editButton){
+				beginProductEdit(JSON.parse(editButton.dataset.product));
+				return;
+			}
+
+			const deleteButton = event.target.closest("[data-delete-product]");
+			if (!deleteButton){
+				return;
+			}
+			const productId = deleteButton.dataset.deleteProduct;
+			const productName = deleteButton.dataset.productName;
+			if (!window.confirm(`Delete ${productName}? This cannot be undone.`)){
+				return;
+			}
+
+			deleteButton.disabled = true;
+			setCatalogFeedback("Deleting product...");
+			try{
+				const response = await fetch(`/pre/admin/products/${encodeURIComponent(productId)}`, { method: "DELETE" });
+				const result = await response.json();
+				if (!response.ok){
+					throw new Error(result.error || "Product could not be deleted.");
+				}
+
+				productTableBody.querySelector(`[data-product-row="${productId}"]`)?.remove();
+				if (!result.productsCount){
+					const emptyRow = document.createElement("tr");
+					emptyRow.id = "emptyProductRow";
+					emptyRow.innerHTML = "<td colspan=\"6\">No products yet. Add your first product to start the catalog.</td>";
+					productTableBody.append(emptyRow);
+				}
+				refreshProductCounts(result.productsCount);
+				setCatalogFeedback(`${productName} was deleted.`);
+				if (editingProductId === productId){
+					resetProductForm();
+					window.location.hash = "products";
+				}
+			} catch(error){
+				setCatalogFeedback(error.message, true);
+				deleteButton.disabled = false;
+			}
+		});
+
+		adminProductForm.addEventListener("submit", async (event) => {
+			event.preventDefault();
+			if (updateImageCount() > 6){
+				showImageError("Choose or link no more than six images in total.");
+				return;
+			}
+
+			const submitButton = adminProductForm.querySelector('[type="submit"]');
+			const isEditing = Boolean(editingProductId);
+			const productUrl = isEditing
+				? `/pre/admin/products/${encodeURIComponent(editingProductId)}`
+				: "/pre/admin/products";
+			submitButton.disabled = true;
+			formFeedback.textContent = isEditing ? "Updating product..." : "Saving product...";
+			try{
+				const response = await fetch(productUrl, {
+					method: isEditing ? "PUT" : "POST",
+					body: new FormData(adminProductForm)
+				});
+				const result = await response.json();
+				if (!response.ok){
+					throw new Error(result.error || "Product could not be saved.");
+				}
+
+				if (isEditing){
+					replaceProductRow(result.product);
+				} else {
+					appendProductRow(result.product);
+				}
+				refreshProductCounts(result.productsCount);
+				resetProductForm();
+				if (!isEditing){
+					productIdInput.value = result.nextProductId;
+				}
+				setCatalogFeedback(isEditing ? `${result.product.name} was updated.` : `${result.product.name} was added.`);
+				window.location.hash = "products";
+			} catch(error){
+				formFeedback.textContent = error.message;
+				formFeedback.classList.add("formFeedbackError");
+			} finally{
+				submitButton.disabled = false;
+			}
+		});
+
+		customerSearch.addEventListener("input", () => {
+			const query = customerSearch.value.trim().toLowerCase();
+			document.querySelectorAll("#customerTableBody tr").forEach((row) => {
+				row.hidden = !row.textContent.toLowerCase().includes(query);
+			});
+		});
+
+		window.addEventListener("hashchange", showPanel);
+		showPanel();
+	</script>
+</body>
+</html>

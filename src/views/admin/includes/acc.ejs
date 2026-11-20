@@ -1,0 +1,237 @@
+<div class="panelIntro">
+	<div>
+		<p class="panelEyebrow">RELATIONSHIPS</p>
+		<h2>Customers</h2>
+		<p class="panelDescription">Track customer orders and complete payment confirmation.</p>
+	</div>
+	<span class="secondaryAction staticAction" id="customerCount">
+		<%= customers.length %> customers
+	</span>
+</div>
+<div class="adminCard tableCard">
+	<div class="tableToolbar">
+		<div>
+			<h3>Recent customers</h3>
+			<p>Customers from placed orders</p>
+		</div><label class="smallSearch"><span class="srOnly">Search customers</span><svg aria-hidden="true"
+				viewBox="0 0 24 24">
+				<circle cx="11" cy="11" r="7"></circle>
+				<path d="m16 16 4 4"></path>
+			</svg><input id="customerSearch" type="search" placeholder="Search customers"></label>
+	</div>
+	<div class="tableScroll">
+		<table class="dataTable">
+			<thead>
+				<tr>
+					<th>Customer</th>
+					<th>Phone</th>
+					<th>Delivery address</th>
+					<th>Order</th>
+					<th>Total</th>
+					<th>Payment</th>
+					<th>M-Pesa code</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody id="customerTableBody">
+				<% orders.forEach((order, index)=> {
+					const paymentLabels = {
+					paid: "Paid",
+					pending: "STK pending",
+					awaiting_verification: "Code submitted",
+					failed: "Failed",
+					cancelled: "Cancelled",
+					review_required: "Review required"
+					};
+					const paymentStatus = paymentLabels[order.paymentStatus] || "Pending";
+					const paymentClass = order.paymentStatus === "paid" ? "statusPaid" : "statusPending";
+					%>
+					<tr data-order-id="<%= order.id %>"
+						data-customer-id="<%= order.customer.userId || order.customer.email %>">
+						<td><span class="tableProduct"><span class="customerAvatar <%= [" avatarRose", "avatarGreen"
+									, "avatarGold" , "avatarBlue" ][index % 4] %>"><%= (order.customer.name || "C"
+										).slice(0, 1).toUpperCase() %></span><span><strong>
+										<%= order.customer.name %>
+									</strong><small>
+										<%= order.customer.email %>
+									</small></span></span></td>
+						<td>
+							<%= order.customer.phone %>
+						</td>
+						<td>
+							<%= order.customer.address %>
+						</td>
+						<td><strong>
+								<%= order.id %>
+							</strong><small class="orderCreatedAt">
+								<%= new Date(order.createdAt).toLocaleString("en-KE") %>
+							</small></td>
+						<td>KSh <%= Number(order.total).toLocaleString("en-KE") %>
+						</td>
+						<td><span class="statusPill <%= paymentClass %>">
+								<%= paymentStatus %>
+							</span></td>
+						<td>
+							<%= order.mpesa?.receipt || order.paymentReference || "—" %>
+								<% if (order.paymentResultDescription && order.paymentStatus !=="paid" ) { %><small>
+										<%= order.paymentResultDescription %>
+									</small>
+									<% } %>
+						</td>
+						<td>
+							<div class="rowActions">
+								<button type="button" class="rowAction print-receipt"
+									data-order-id="<%= order.id %>">Receipt</button>
+								<button type="button" class="rowAction print-label"
+									data-order-id="<%= order.id %>">Shipping label</button>
+								<button type="button" class="rowAction confirm-payment" data-order-id="<%= order.id %>"
+									<%=order.paymentStatus==="paid" ? "disabled" : "" %>><%=
+										order.paymentStatus==="paid" ? "Paid" : "Confirm payment" %></button>
+								<button type="button" class="rowAction rowActionDanger delete-order"
+									data-order-id="<%= order.id %>">Delete order</button>
+							</div>
+						</td>
+					</tr>
+					<% }); %>
+						<% if (!orders.length) { %>
+							<tr>
+								<td colspan="8">Customers and orders will appear here after checkout.</td>
+							</tr>
+							<% } %>
+			</tbody>
+		</table>
+	</div>
+</div>
+<p class="storageNote">Safaricom callbacks confirm successful STK payments automatically. Manually submitted codes and
+	amount mismatches require admin review. Deleting an order restores its items to stock.</p>
+<script>
+	const receiptButtons = document.querySelectorAll(".print-receipt");
+	const shippingLabelButtons = document.querySelectorAll(".print-label");
+	const paymentButtons = document.querySelectorAll(".confirm-payment");
+	const deleteOrderButtons = document.querySelectorAll(".delete-order");
+	const customerCount = document.getElementById("customerCount");
+	const paymentLabels = {
+		paid: "Paid",
+		pending: "STK pending",
+		awaiting_verification: "Code submitted",
+		failed: "Failed",
+		cancelled: "Cancelled",
+		review_required: "Review required"
+	};
+
+	async function refreshOrderPaymentStatuses() {
+		if (document.hidden) return;
+		try {
+			const response = await fetch("/pre/admin/orders/payment-status", { cache: "no-store" });
+			if (!response.ok) return;
+			const result = await response.json();
+			(result.orders || []).forEach((order) => {
+				const row = document.querySelector(`#customerTableBody tr[data-order-id="${CSS.escape(order.id)}"]`);
+				if (!row) return;
+				const status = row.querySelector(".statusPill");
+				const nextStatus = paymentLabels[order.paymentStatus] || "Pending";
+				if (status && status.textContent.trim() !== nextStatus) {
+					status.textContent = nextStatus;
+					status.classList.toggle("statusPaid", order.paymentStatus === "paid");
+					status.classList.toggle("statusPending", order.paymentStatus !== "paid");
+				}
+				const referenceCell = row.querySelector("td:nth-child(7)");
+				if (referenceCell) referenceCell.textContent = order.paymentReference || "—";
+				const confirmButton = row.querySelector(".confirm-payment");
+				if (confirmButton && order.paymentStatus === "paid") {
+					confirmButton.disabled = true;
+					confirmButton.textContent = "Paid";
+				}
+			});
+		} catch (error) {
+			console.warn("Could not refresh payment statuses:", error);
+		}
+	}
+
+	window.setInterval(refreshOrderPaymentStatuses, 5000);
+	window.addEventListener("focus", refreshOrderPaymentStatuses);
+
+	receiptButtons.forEach((button) => {
+		button.addEventListener("click", () => {
+			const orderId = button.dataset.orderId;
+			if (!orderId) {
+				return;
+			}
+			window.open(`/pre/admin/orders/${encodeURIComponent(orderId)}/receipt`, "_blank", "noopener,noreferrer");
+		});
+	});
+
+	shippingLabelButtons.forEach((button) => {
+		button.addEventListener("click", () => {
+			const orderId = button.dataset.orderId;
+			if (!orderId) {
+				return;
+			}
+			window.open(`/pre/admin/orders/${encodeURIComponent(orderId)}/shipping-label`, "_blank", "noopener,noreferrer");
+		});
+	});
+
+	paymentButtons.forEach((button) => {
+		button.addEventListener("click", async () => {
+			const orderId = button.dataset.orderId;
+			if (!orderId) {
+				return;
+			}
+			button.disabled = true;
+			button.textContent = "Confirming...";
+			try {
+				const response = await fetch(`/pre/admin/orders/${encodeURIComponent(orderId)}/payment`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ paymentMethod: "Confirmed by admin" })
+				});
+				const result = await response.json();
+				if (!response.ok) {
+					throw new Error(result.error || "Payment confirmation failed.");
+				}
+				button.textContent = "Paid";
+				const statusPill = button.closest("tr").querySelector(".statusPill");
+				if (statusPill) {
+					statusPill.textContent = "Paid";
+					statusPill.classList.remove("statusPending");
+					statusPill.classList.add("statusPaid");
+				}
+			} catch (error) {
+				button.disabled = false;
+				button.textContent = "Confirm payment";
+				window.alert(error.message);
+			}
+		});
+	});
+
+	deleteOrderButtons.forEach((button) => {
+		button.addEventListener("click", async () => {
+			const orderId = button.dataset.orderId;
+			if (!orderId || !window.confirm(`Delete order ${orderId}? Its items will be returned to stock.`)) {
+				return;
+			}
+			button.disabled = true;
+			button.textContent = "Deleting...";
+			try {
+				const response = await fetch(`/pre/admin/orders/${encodeURIComponent(orderId)}`, { method: "DELETE" });
+				const result = await response.json();
+				if (!response.ok) {
+					throw new Error(result.error || "Order could not be deleted.");
+				}
+				button.closest("tr").remove();
+				const rows = [...document.querySelectorAll("#customerTableBody tr[data-customer-id]")];
+				const customerIds = new Set(rows.map((row) => row.dataset.customerId));
+				customerCount.textContent = `${customerIds.size} customers`;
+				if (!rows.length) {
+					const emptyRow = document.createElement("tr");
+					emptyRow.innerHTML = "<td colspan=\"8\">Customers and orders will appear here after checkout.</td>";
+					document.getElementById("customerTableBody").append(emptyRow);
+				}
+			} catch (error) {
+				window.alert(error.message);
+				button.disabled = false;
+				button.textContent = "Delete order";
+			}
+		});
+	});
+</script>

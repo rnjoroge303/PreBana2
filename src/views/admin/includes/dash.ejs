@@ -1,0 +1,120 @@
+<div class="metricGrid">
+	<article class="metricCard">
+		<div class="metricTop"><span>Gross sales</span><span class="metricIcon metricIconGreen"
+				aria-hidden="true">↗</span></div>
+		<strong class="metricValue">KSh <%= Number(stats.grossSales).toLocaleString("en-KE") %></strong>
+		<p>Confirmed M-Pesa and admin-verified payments</p>
+	</article>
+	<article class="metricCard">
+		<div class="metricTop"><span>Orders</span><span class="metricIcon metricIconRose" aria-hidden="true">↗</span>
+		</div>
+		<strong class="metricValue">
+			<%= stats.totalOrders %>
+		</strong>
+		<p>
+			<%= stats.pendingPayments %> awaiting payment or review
+		</p>
+	</article>
+	<article class="metricCard">
+		<div class="metricTop"><span>Products</span><span class="metricIcon metricIconGold" aria-hidden="true">◇</span>
+		</div>
+		<strong class="metricValue" id="dashboardProductCount">
+			<%= products.length %>
+		</strong>
+		<p>Active catalog items</p>
+	</article>
+	<article class="metricCard">
+		<div class="metricTop"><span>Customers</span><span class="metricIcon metricIconBlue" aria-hidden="true">♧</span>
+		</div>
+		<strong class="metricValue">
+			<%= customers.length %>
+		</strong>
+		<p>Customers from placed orders</p>
+	</article>
+</div>
+<div class="dashboardGrid">
+	<section class="adminCard salesCard" aria-labelledby="salesTitle">
+		<div class="cardHeading">
+			<div>
+				<h2 id="salesTitle">Sales overview</h2>
+				<p>Revenue at a glance</p>
+			</div>
+			<span class="periodTag">Last 7 days</span>
+		</div>
+		<div class="chartSummary"><strong>KSh <%= Number(stats.weeklySales).toLocaleString("en-KE") %>
+			</strong><span>Confirmed payments in the last 7 days</span></div>
+		<div class="salesChart" role="img" aria-label="Sales overview based on confirmed payment records">
+			<div class="chartYAxis"><span>
+					<%= Number(stats.dailySalesScale).toLocaleString("en-KE") %>
+				</span><span>
+					<%= Math.round(stats.dailySalesScale * 2 / 3).toLocaleString("en-KE") %>
+				</span><span>
+					<%= Math.round(stats.dailySalesScale / 3).toLocaleString("en-KE") %>
+				</span><span>0</span></div>
+			<div class="chartPlot">
+				<div class="chartGridline"></div>
+				<div class="chartGridline"></div>
+				<div class="chartGridline"></div>
+				<div class="chartGridline"></div>
+				<div class="chartBars">
+					<% stats.dailySales.forEach((entry)=> { %><span style="--bar: <%= entry.height %>%"
+							title="<%= entry.day.toLocaleDateString('en-KE', { weekday: 'long' }) %>: KSh <%= Number(entry.sales).toLocaleString('en-KE') %>"></span>
+						<% }); %>
+				</div>
+				<div class="chartXAxis">
+					<% stats.dailySales.forEach((entry)=> { %><span>
+							<%= entry.day.toLocaleDateString('en-KE', { weekday: 'short' }) %>
+						</span>
+						<% }); %>
+				</div>
+			</div>
+		</div>
+	</section>
+	<section class="adminCard activityCard" aria-labelledby="activityTitle">
+		<div class="cardHeading">
+			<div>
+				<h2 id="activityTitle">Recent activity</h2>
+				<p>Latest store updates</p>
+			</div>
+			<a class="textLink" href="#reports" data-panel-link="reports">View reports <span
+					aria-hidden="true">→</span></a>
+		</div>
+		<div class="activityList">
+			<% if (stats.recentOrders.length) { %>
+				<% stats.recentOrders.forEach((order)=> { %>
+					<div class="activityItem"><span class="activitySymbol activityOrder">↗</span>
+						<div><strong>
+								<%= order.paymentStatus==="paid" ? "Payment confirmed" : "Order received" %>
+							</strong>
+							<p>Order <%= order.id %> · KSh <%= Number(order.total || 0).toLocaleString("en-KE") %> · <%=
+											order.paymentStatus || "pending" %>
+							</p>
+						</div><time>
+							<%= new Date(order.createdAt).toLocaleDateString("en-KE") %>
+						</time>
+					</div>
+					<% }); %>
+						<% } else { %>
+							<p>No orders have been placed yet.</p>
+							<% } %>
+		</div>
+	</section>
+</div>
+<section class="adminCard quickPanel" aria-labelledby="quickTitle">
+	<div class="cardHeading">
+		<div>
+			<h2 id="quickTitle">Quick actions</h2>
+			<p>Common tasks, one click away</p>
+		</div>
+	</div>
+	<div class="quickActions">
+		<a href="#product" data-panel-link="product"><span class="quickIcon">+</span><span><strong>Add a
+					product</strong><small>Expand your catalog</small></span><span class="quickArrow">→</span></a>
+		<a href="#products" data-panel-link="products"><span
+				class="quickIcon quickIconRose">▤</span><span><strong>Manage products</strong><small>Review your
+					catalog</small></span><span class="quickArrow">→</span></a>
+		<a href="/pre/store" target="_blank" rel="noreferrer"><span
+				class="quickIcon quickIconGold">↗</span><span><strong>View storefront</strong><small>See the customer
+					view</small></span><span class="quickArrow">→</span></a>
+	</div>
+</section>

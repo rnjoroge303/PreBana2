@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ad5b78">
+    <title>Checkout | PreBana Cosmetics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Playfair+Display:wght@500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/styles/css/main.css">
+    <link rel="stylesheet" href="/styles/css/product.css">
+    <link rel="stylesheet" href="/styles/css/checkout.css">
+</head>
+
+<body class="checkoutPage">
+    <div class="announcement"><span>Beauty for the everyday, and everything in between.</span><span
+            class="announcementNote">PREBANA COSMETICS <span aria-hidden="true">·</span> NAIROBI</span></div>
+    <header class="checkoutHeader">
+        <a class="logo" href="/pre/store" aria-label="PreBana Cosmetics home"><span class="brandMark"
+                aria-hidden="true">P</span><span class="brandText"><strong>PreBana</strong><small>BOTANICAL
+                    BEAUTY</small></span></a>
+        <a class="checkoutBack" href="/pre/store">← Continue shopping</a>
+    </header>
+    <main class="checkoutMain">
+        <div class="checkoutHeading">
+            <p class="eyebrow"><span class="eyebrowLine"></span> ALMOST YOURS</p>
+            <h1>Checkout</h1>
+            <p>Confirm your delivery details and review your bag.</p>
+        </div>
+        <div class="checkoutLayout" id="checkoutLayout">
+            <section class="checkoutFormSection" aria-labelledby="deliveryHeading">
+                <div class="checkoutSectionHeading"><span>01</span>
+                    <div>
+                        <h2 id="deliveryHeading">Delivery details</h2>
+                        <p>Where should we bring your order?</p>
+                    </div>
+                </div>
+                <form id="checkoutForm" class="checkoutForm">
+                    <label for="customerName">Full name</label>
+                    <input id="customerName" name="customerName" autocomplete="name" maxlength="100" required
+                        placeholder="Name for delivery">
+                    <label for="customerEmail">Email address</label>
+                    <input id="customerEmail" type="email" value="<%= customerEmail %>" readonly>
+                    <label for="customerPhone">Phone number</label>
+                    <input id="customerPhone" name="phone" type="tel" autocomplete="tel" maxlength="20" required
+                        placeholder="e.g. +254 712 345 678">
+                    <fieldset class="paymentPhoneChoices">
+                        <legend>Which number should receive the M-Pesa prompt?</legend>
+                        <label class="paymentPhoneChoice" for="payOnDeliveryPhone">
+                            <input id="payOnDeliveryPhone" type="radio" name="paymentPhoneChoice" value="delivery"
+                                checked>
+                            <span>Use delivery phone <strong id="deliveryPhonePreview">Enter your delivery phone
+                                    above</strong></span>
+                        </label>
+                        <label class="paymentPhoneChoice" for="payOnOwnPhone">
+                            <input id="payOnOwnPhone" type="radio" name="paymentPhoneChoice" value="own">
+                            <span>Use a different phone number</span>
+                        </label>
+                        <div id="ownPaymentPhoneField" hidden>
+                            <label for="ownPaymentPhone">Paying phone number</label>
+                            <input id="ownPaymentPhone" type="tel" autocomplete="tel" maxlength="20"
+                                placeholder="e.g. +254 712 345 678" disabled>
+                        </div>
+                    </fieldset>
+                    <label for="deliveryAddress">Delivery address</label>
+                    <textarea id="deliveryAddress" name="address" autocomplete="street-address" rows="3" maxlength="300"
+                        required placeholder="Building, street, area, and town"></textarea>
+                    <label for="orderNote">Order note <span>Optional</span></label>
+                    <textarea id="orderNote" name="note" rows="2" maxlength="500"
+                        placeholder="Anything else we should know?"></textarea>
+                    <p class="checkoutError" id="checkoutError" role="alert" hidden></p>
+                    <button class="placeOrderButton" id="placeOrderButton" type="submit">Place order &amp; pay with
+                        M-Pesa <span aria-hidden="true">→</span></button>
+                    <p class="paymentNote">An M-Pesa STK prompt will be sent to your phone after you place the order.
+                    </p>
+                </form>
+            </section>
+            <aside class="orderSummary" aria-labelledby="summaryHeading">
+                <div class="checkoutSectionHeading"><span>02</span>
+                    <div>
+                        <h2 id="summaryHeading">Your bag</h2>
+                        <p id="summaryCount">0 items</p>
+                    </div>
+                </div>
+                <div class="checkoutItems" id="checkoutItems"></div>
+                <div class="checkoutTotals">
+                    <div><span>Subtotal</span><strong id="orderSubtotal">KSh 0</strong></div>
+                    <div><span>Delivery</span><strong>Confirmed after order</strong></div>
+                    <div class="checkoutGrandTotal"><span>Order total</span><strong id="orderTotal">KSh 0</strong></div>
+                </div>
+            </aside>
+        </div>
+        <section class="checkoutModal" id="mpesaModal" role="dialog" aria-modal="true" aria-labelledby="mpesaModalTitle"
+            hidden>
+            <div class="checkoutModalCard">
+                <span class="successMark" aria-hidden="true">M</span>
+                <p class="eyebrow"><span class="eyebrowLine"></span> M-PESA PAYMENT</p>
+                <h2 id="mpesaModalTitle">Waiting for M-Pesa confirmation</h2>
+                <p id="mpesaModalMessage">We are sending a secure M-Pesa prompt to your delivery phone. Approve it on
+                    your phone to complete payment.</p>
+                <button class="placeOrderButton" id="retryMpesaButton" type="button" hidden>Send M-Pesa prompt again
+                    <span aria-hidden="true">→</span></button>
+                <details class="manualPaymentFallback">
+                    <summary>Already paid another way? Submit your M-Pesa code</summary>
+                    <form id="mpesaConfirmationForm" class="mpesaConfirmationForm">
+                        <label for="mpesaReference">M-Pesa transaction code</label>
+                        <input id="mpesaReference" name="paymentReference" maxlength="20" autocomplete="off" required
+                            placeholder="e.g. QGH7X2ABC1">
+                        <p class="checkoutError" id="mpesaError" role="alert" hidden></p>
+                        <button class="placeOrderButton" id="confirmMpesaButton" type="submit">Submit code for admin
+                            verification <span aria-hidden="true">→</span></button>
+                    </form>
+                </details>
+                <p class="paymentNote">STK payments update automatically after Safaricom confirms them. Codes submitted
+                    manually require admin verification.</p>
+                <a class="checkoutModalLater" href="/pre/store#orders">I'll do this later</a>
+            </div>
+        </section>
+        <section class="checkoutModal" id="orderReceivedModal" role="dialog" aria-modal="true"
+            aria-labelledby="orderReceivedTitle" hidden>
+            <div class="checkoutModalCard">
+                <span class="successMark" aria-hidden="true">✓</span>
+                <p class="eyebrow"><span class="eyebrowLine"></span> ORDER RECEIVED</p>
+                <h2 id="orderReceivedTitle">Your order is being processed</h2>
+                <p id="orderReceivedMessage">Your payment has been confirmed by M-Pesa.</p>
+                <p class="orderReference">Order <strong id="successOrderId"></strong></p>
+                <a class="heroCta" href="/pre/store#orders">View my orders <span aria-hidden="true">→</span></a>
+            </div>
+        </section>
+        <script type="application/json"
+            id="catalogData"><%- JSON.stringify(products).replace(/</g, '\\u003c') %></script>
+    </main>
+    <script>
+        const catalog = JSON.parse(document.getElementById("catalogData").textContent);
+        const productById = new Map(catalog.map((product) => [product.id, product]));
+        const cartStorageKey = "prebanaCart";
+        const checkoutForm = document.getElementById("checkoutForm");
+        const checkoutItems = document.getElementById("checkoutItems");
+        const checkoutError = document.getElementById("checkoutError");
+        const placeOrderButton = document.getElementById("placeOrderButton");
+        const checkoutLayout = document.getElementById("checkoutLayout");
+        const mpesaModal = document.getElementById("mpesaModal");
+        const orderReceivedModal = document.getElementById("orderReceivedModal");
+        const mpesaConfirmationForm = document.getElementById("mpesaConfirmationForm");
+        const mpesaError = document.getElementById("mpesaError");
+        const confirmMpesaButton = document.getElementById("confirmMpesaButton");
+        const retryMpesaButton = document.getElementById("retryMpesaButton");
+        const mpesaModalMessage = document.getElementById("mpesaModalMessage");
+        const customerPhoneInput = document.getElementById("customerPhone");
+        const ownPaymentPhoneInput = document.getElementById("ownPaymentPhone");
+        const ownPaymentPhoneField = document.getElementById("ownPaymentPhoneField");
+        const deliveryPhonePreview = document.getElementById("deliveryPhonePreview");
+        let currentOrderId = null;
+        let cart = [];
+
+        try {
+            const storedCart = JSON.parse(window.localStorage.getItem(cartStorageKey) || "[]");
+            cart = Array.isArray(storedCart) ? storedCart.filter((item) => productById.has(item.productId) && Number.isInteger(item.quantity) && item.quantity > 0) : [];
+        } catch {
+            cart = [];
+        }
+
+        function formatPrice(value) {
+            return `KSh ${Number(value).toLocaleString("en-KE")}`;
+        }
+
+        function selectedPaymentPhone() {
+            return document.getElementById("payOnOwnPhone").checked
+                ? ownPaymentPhoneInput.value.trim()
+                : customerPhoneInput.value.trim();
+        }
+
+        customerPhoneInput.addEventListener("input", () => {
+            deliveryPhonePreview.textContent = customerPhoneInput.value.trim() || "Enter your delivery phone above";
+        });
+        document.querySelectorAll('input[name="paymentPhoneChoice"]').forEach((choice) => {
+            choice.addEventListener("change", () => {
+                const useOwnPhone = document.getElementById("payOnOwnPhone").checked;
+                ownPaymentPhoneField.hidden = !useOwnPhone;
+                ownPaymentPhoneInput.disabled = !useOwnPhone;
+                ownPaymentPhoneInput.required = useOwnPhone;
+                if (useOwnPhone) ownPaymentPhoneInput.focus();
+            });
+        });
+
+        function updateCart() {
+            window.localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+            checkoutItems.replaceChildren();
+            let subtotal = 0;
+            let itemCount = 0;
+
+            cart.forEach((item) => {
+                const product = productById.get(item.productId);
+                if (!product) {
+                    return;
+                }
+                const lineTotal = Number(product.price) * item.quantity;
+                subtotal += lineTotal;
+                itemCount += item.quantity;
+
+                const row = document.createElement("div");
+                const details = document.createElement("div");
+                const name = document.createElement("strong");
+                const quantity = document.createElement("span");
+                const price = document.createElement("strong");
+                row.className = "checkoutItem";
+                details.className = "checkoutItemDetails";
+                name.textContent = product.name;
+                quantity.textContent = `Qty ${item.quantity}`;
+                price.textContent = formatPrice(lineTotal);
+                details.append(name, quantity);
+                row.append(details, price);
+                checkoutItems.append(row);
+            });
+
+            document.getElementById("summaryCount").textContent = `${itemCount} ${itemCount === 1 ? "item" : "items"}`;
+            document.getElementById("orderSubtotal").textContent = formatPrice(subtotal);
+            document.getElementById("orderTotal").textContent = formatPrice(subtotal);
+            placeOrderButton.disabled = itemCount === 0;
+            if (!itemCount) {
+                const empty = document.createElement("p");
+                empty.className = "checkoutEmpty";
+                empty.textContent = "Your bag is empty. Choose a product before checkout.";
+                checkoutItems.append(empty);
+            }
+        }
+
+        checkoutForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            checkoutError.hidden = true;
+            placeOrderButton.disabled = true;
+            placeOrderButton.textContent = "Placing order...";
+            try {
+                const formData = new FormData(checkoutForm);
+                const response = await fetch("/pre/checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        customerName: formData.get("customerName"),
+                        phone: formData.get("phone"),
+                        paymentPhone: selectedPaymentPhone(),
+                        address: formData.get("address"),
+                        note: formData.get("note"),
+                        items: cart
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || "We couldn't place your order.");
+                }
+
+                window.localStorage.removeItem(cartStorageKey);
+                checkoutLayout.hidden = true;
+                currentOrderId = result.orderId;
+                document.getElementById("successOrderId").textContent = result.orderId;
+                mpesaModal.hidden = false;
+                await sendMpesaPrompt();
+            } catch (error) {
+                checkoutError.textContent = error.message;
+                checkoutError.hidden = false;
+                placeOrderButton.disabled = false;
+                placeOrderButton.innerHTML = 'Place order <span aria-hidden="true">→</span>';
+            }
+        });
+
+        async function sendMpesaPrompt() {
+            retryMpesaButton.hidden = true;
+            retryMpesaButton.disabled = true;
+            mpesaModalMessage.textContent = "Sending an M-Pesa prompt to your phone...";
+            try {
+                const response = await fetch(`/pre/orders/${encodeURIComponent(currentOrderId)}/mpesa`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phoneNumber: selectedPaymentPhone() })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || "The M-Pesa prompt could not be sent.");
+                }
+                mpesaModalMessage.textContent = "Prompt sent. Approve the payment on your phone; this page will update when M-Pesa confirms it.";
+                pollPaymentStatus(0);
+            } catch (error) {
+                mpesaModalMessage.textContent = `${error.message} Check the phone number and try again, or use the manual confirmation option below.`;
+                retryMpesaButton.hidden = false;
+                retryMpesaButton.disabled = false;
+            }
+        }
+
+        async function pollPaymentStatus(attempt) {
+            if (attempt >= 60) {
+                mpesaModalMessage.textContent = "We have not received a payment result yet. You can wait, check your phone, or send the prompt again.";
+                retryMpesaButton.hidden = false;
+                retryMpesaButton.disabled = false;
+                return;
+            }
+            await new Promise((resolve) => window.setTimeout(resolve, 2500));
+            try {
+                const response = await fetch(`/pre/orders/${encodeURIComponent(currentOrderId)}/payment-status`);
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || "Could not check payment status.");
+                }
+                if (result.paymentStatus === "paid") {
+                    mpesaModal.hidden = true;
+                    orderReceivedModal.hidden = false;
+                    document.getElementById("orderReceivedMessage").textContent = result.paymentReference
+                        ? `Payment confirmed by M-Pesa. Receipt: ${result.paymentReference}.`
+                        : "Your payment has been confirmed by M-Pesa.";
+                    return;
+                }
+                if (["failed", "cancelled", "review_required"].includes(result.paymentStatus)) {
+                    mpesaModalMessage.textContent = result.paymentResultDescription || "M-Pesa did not confirm this payment. You can retry the prompt or submit a code for admin verification.";
+                    retryMpesaButton.hidden = false;
+                    retryMpesaButton.disabled = false;
+                    return;
+                }
+                pollPaymentStatus(attempt + 1);
+            } catch (error) {
+                mpesaModalMessage.textContent = error.message;
+                retryMpesaButton.hidden = false;
+                retryMpesaButton.disabled = false;
+            }
+        }
+
+        retryMpesaButton.addEventListener("click", sendMpesaPrompt);
+
+        mpesaConfirmationForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            mpesaError.hidden = true;
+            confirmMpesaButton.disabled = true;
+            confirmMpesaButton.textContent = "Submitting confirmation...";
+            try {
+                const response = await fetch(`/pre/orders/${encodeURIComponent(currentOrderId)}/mpesa-confirmation`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ paymentReference: new FormData(mpesaConfirmationForm).get("paymentReference") })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || "Your M-Pesa confirmation could not be submitted.");
+                }
+                mpesaModal.hidden = true;
+                orderReceivedModal.hidden = false;
+                document.getElementById("orderReceivedMessage").textContent = "Your M-Pesa code was submitted and is waiting for admin verification.";
+                window.setTimeout(() => {
+                    window.location.href = "/pre/store#orders";
+                }, 2500);
+            } catch (error) {
+                mpesaError.textContent = error.message;
+                mpesaError.hidden = false;
+                confirmMpesaButton.disabled = false;
+                confirmMpesaButton.innerHTML = 'Submit payment confirmation <span aria-hidden="true">→</span>';
+            }
+        });
+
+        updateCart();
+    </script>
+</body>
+
+</html>

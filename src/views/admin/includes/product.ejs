@@ -1,0 +1,39 @@
+<div class="panelIntro">
+    <div><p class="panelEyebrow">CATALOG</p><h2 id="productFormTitle">Add a product</h2><p class="panelDescription" id="productFormDescription">Create a new item for your PreBana collection.</p></div>
+    <a class="secondaryAction" href="#products" data-panel-link="products">View catalog</a>
+</div>
+<div class="formLayout">
+    <form class="adminCard productForm" id="adminProductForm" enctype="multipart/form-data">
+        <div class="formSectionHeading"><span class="formStep">01</span><div><h3>Product details</h3><p>Give shoppers the details they need.</p></div></div>
+        <label class="fieldLabel" for="newProductId">Product ID</label>
+        <input class="formControl readOnlyControl" id="newProductId" name="productId" value="<%= productId %>" readonly>
+        <label class="fieldLabel" for="newProductName">Product name <span>*</span></label>
+        <input class="formControl" id="newProductName" name="name" required maxlength="80" placeholder="e.g. Rose Glow Serum">
+        <div class="formTwoCol">
+            <div><label class="fieldLabel" for="newProductCategory">Category <span>*</span></label><select class="formControl" id="newProductCategory" name="category" required><option value="">Choose a category</option><option value="featured">Featured</option><option value="hair">Hair care</option><option value="face">Face care</option><option value="body">Body care</option><option value="baby">Baby care</option><option value="nails">Nails</option><option value="mens">Men's care</option></select></div>
+            <div><label class="fieldLabel" for="newProductPrice">Price (KSh) <span>*</span></label><input class="formControl" id="newProductPrice" name="price" type="number" min="1" step="1" required placeholder="850"></div>
+        </div>
+        <label class="fieldLabel" for="newProductStock">Available stock</label>
+        <input class="formControl" id="newProductStock" name="stock" type="number" min="0" step="1" value="0" required>
+        <label class="fieldLabel" for="newProductDescription">Description</label>
+        <textarea class="formControl formTextarea" id="newProductDescription" name="description" rows="4" maxlength="240" required placeholder="Describe what makes this product special."></textarea>
+        <div class="imageUploadSection">
+            <div class="imageUploadHeading"><div><span class="fieldLabel">Product images</span><p>Upload photos or add image links. Up to 6 total.</p></div><span class="imageCount" id="imageCount">0 / 6</span></div>
+            <label class="uploadDropzone" for="productImages">
+                <span class="uploadIcon" aria-hidden="true">↑</span>
+                <span><strong>Choose product photos</strong><small>JPEG, PNG, WebP or AVIF, up to 5 MB each</small></span>
+                <input id="productImages" name="images" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+            </label>
+            <div class="imageUrlList" id="imageUrlList"></div>
+            <button class="addImageUrl" id="addImageUrl" type="button"><span aria-hidden="true">+</span> Add another image link</button>
+            <div class="imagePreviewGrid" id="imagePreviewGrid" aria-live="polite"></div>
+            <p class="imageError" id="imageError" role="status" hidden></p>
+        </div>
+        <p class="formFeedback" id="formFeedback" role="status" aria-live="polite"></p>
+        <div class="formFooter"><p class="requiredNote"><span>*</span> Required fields</p><div class="formActions"><button class="cancelEditButton" id="cancelProductEdit" type="button" hidden>Cancel edit</button><button class="primaryAction" id="saveProductButton" type="submit">Save product <span aria-hidden="true">→</span></button></div></div>
+    </form>
+    <aside class="formAside">
+        <div class="adminCard asideTip"><span class="tipIcon" aria-hidden="true">✳</span><h3>Good product pages sell.</h3><p>Use a clear name, accurate price, and a simple description. Add a well-lit product photo when you have one.</p></div>
+        <div class="adminCard asidePreview"><p class="panelEyebrow">CATALOG STORAGE</p><h3>Saved to the catalog</h3><p>Product details are stored in <code>src/data/data.json</code>. Uploaded photos are saved under <code>public/uploads/products</code>.</p></div>
+    </aside>
+</div>
