@@ -379,7 +379,8 @@ async function placeOrder(req, res, next) {
         }
         return res.status(201).json({ orderId: order.id, total: order.total });
     } catch (error) {
-        next(error);
+        console.error("[Checkout] Could not place order:", error);
+        return res.status(500).json({ error: "We couldn't save your order. Please try again." });
     }
 }
 

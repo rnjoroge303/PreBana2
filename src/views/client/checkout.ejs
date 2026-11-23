@@ -243,7 +243,10 @@
                 const formData = new FormData(checkoutForm);
                 const response = await fetch("/pre/checkout", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
                     body: JSON.stringify({
                         customerName: formData.get("customerName"),
                         phone: formData.get("phone"),
@@ -253,6 +256,10 @@
                         items: cart
                     })
                 });
+                const contentType = response.headers.get("content-type") || "";
+                if (!contentType.includes("application/json")) {
+                    throw new Error(`The server returned an unexpected response (${response.status}). Please refresh and try again.`);
+                }
                 const result = await response.json();
                 if (!response.ok) {
                     throw new Error(result.error || "We couldn't place your order.");

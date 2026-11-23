@@ -100,6 +100,9 @@ function requireRole(requiredRole) {
         const user = verifyRequestUser(req, requiredRole);
         if (!user) {
             clearAuthCookie(res, requiredRole);
+            if (String(req.get("Accept") || "").includes("application/json")) {
+                return res.status(401).json({ error: "Your session has expired. Please sign in again." });
+            }
             return res.redirect(`/pre/${requiredRole}/login`);
         }
         req.authUser = user;
