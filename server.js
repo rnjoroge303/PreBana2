@@ -15,7 +15,7 @@ const views = [
   path.join(__dirname, 'src', 'views', 'admin'),
   path.join(__dirname, 'src', 'views', 'admin', 'includes'),
 ];
-
+// app set and use
 app.set('view engine', 'ejs');
 app.set('views', views);
 app.use(express.static(path.join(__dirname, 'public')));
