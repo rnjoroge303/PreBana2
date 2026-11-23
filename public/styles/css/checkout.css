@@ -22,6 +22,11 @@
     padding: 0;
 }
 
+.checkoutHeader .brandLogo {
+    width: 80px;
+    height: 80px;
+}
+
 .checkoutBack {
     color: #78847d;
     font-size: 0.78rem;

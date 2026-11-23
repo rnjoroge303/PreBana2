@@ -71,10 +71,10 @@ function updateOrderByCheckoutRequest(checkoutRequestId, change) {
     });
 }
 
-function deleteOrder(orderId) {
+function deleteOrder(orderId, canDelete = () => true) {
     return changeOrders((orders) => {
         const index = orders.findIndex((entry) => entry.id === String(orderId));
-        if (index < 0) {
+        if (index < 0 || !canDelete(orders[index])) {
             return { value: null, skipWrite: true };
         }
         const [order] = orders.splice(index, 1);

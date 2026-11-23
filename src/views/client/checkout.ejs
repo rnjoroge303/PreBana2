@@ -20,9 +20,9 @@
     <div class="announcement"><span>Beauty for the everyday, and everything in between.</span><span
             class="announcementNote">PREBANA COSMETICS <span aria-hidden="true">·</span> NAIROBI</span></div>
     <header class="checkoutHeader">
-        <a class="logo" href="/pre/store" aria-label="PreBana Cosmetics home"><span class="brandMark"
-                aria-hidden="true">P</span><span class="brandText"><strong>PreBana</strong><small>BOTANICAL
-                    BEAUTY</small></span></a>
+        <a class="logo" href="/pre/store" aria-label="PreBana Cosmetics home">
+            <img class="brandLogo" src="/uploads/logo/preLogo.jpeg" alt="PreBana Cosmetics">
+        </a>
         <a class="checkoutBack" href="/pre/store">← Continue shopping</a>
     </header>
     <main class="checkoutMain">
@@ -119,7 +119,7 @@
                 </details>
                 <p class="paymentNote">Your code is only confirmed when it matches the receipt Safaricom sent to our
                     records and the payment amount matches your order.</p>
-                <a class="checkoutModalLater" href="/pre/store#orders">I'll do this later</a>
+                <a class="checkoutModalLater" href="/pre/orders">I'll do this later</a>
             </div>
         </section>
         <section class="checkoutModal" id="orderReceivedModal" role="dialog" aria-modal="true"
@@ -130,7 +130,7 @@
                 <h2 id="orderReceivedTitle">Your order is being processed</h2>
                 <p id="orderReceivedMessage">Your payment has been confirmed by M-Pesa.</p>
                 <p class="orderReference">Order <strong id="successOrderId"></strong></p>
-                <a class="heroCta" id="viewReceiptLink" href="/pre/store#orders">View receipt <span
+                <a class="heroCta" id="viewReceiptLink" href="/pre/orders">View receipt <span
                         aria-hidden="true">→</span></a>
             </div>
         </section>
@@ -318,7 +318,7 @@
                         ? `Payment confirmed by M-Pesa. Receipt: ${result.paymentReference}.`
                         : "Your payment has been confirmed by M-Pesa.";
                     window.setTimeout(() => {
-                        window.location.href = viewReceiptLink.href;
+                        window.location.href = "/pre/orders";
                     }, 2500);
                     return;
                 }

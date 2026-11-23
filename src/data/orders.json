@@ -1,7 +1,7 @@
 {
   "orders": [
     {
-      "id": "PB-20261123-A02BAD",
+      "id": "PB-20261123-E4F11E",
       "customer": {
         "userId": "12effd3f-bf07-46b5-a4e0-28eed2b62d49",
         "name": "ROBERT WACHIRA",
@@ -17,96 +17,36 @@
           "quantity": 1,
           "unitPrice": 10,
           "lineTotal": 10
-        }
-      ],
-      "total": 10,
-      "note": "",
-      "status": "received",
-      "paymentStatus": "pending",
-      "paymentMethod": "M-Pesa STK Push",
-      "createdAt": "2026-11-23T19:09:01.358Z",
-      "mpesa": {
-        "checkoutRequestId": "ws_CO_23112026220902879797510626",
-        "checkoutRequestIds": [
-          "ws_CO_23112026220902879797510626"
-        ],
-        "merchantRequestId": "5b08-4818-89af-91f017a7a3aa39947546",
-        "initiatedAt": "2026-11-23T19:09:02.346Z",
-        "receipt": null,
-        "amount": null
-      }
-    },
-    {
-      "id": "PB-20261123-E8DBF6",
-      "customer": {
-        "userId": "12effd3f-bf07-46b5-a4e0-28eed2b62d49",
-        "name": "ROBERT WACHIRA",
-        "email": "rnjoroge303@gmail.com",
-        "phone": "+254797510626",
-        "address": "mukuru kayaba, enterprise rd, naiobi kenya"
-      },
-      "paymentPhone": "254797510626",
-      "items": [
+        },
         {
-          "productId": "PB-20261123-732DDB",
-          "name": "admin",
+          "productId": "PB-20261022-5709EF",
+          "name": "rosy sanitizer",
           "quantity": 1,
-          "unitPrice": 900,
-          "lineTotal": 900
+          "unitPrice": 50,
+          "lineTotal": 50
         }
       ],
-      "total": 900,
+      "total": 60,
       "note": "",
-      "status": "received",
-      "paymentStatus": "pending",
+      "status": "processing",
+      "paymentStatus": "paid",
       "paymentMethod": "M-Pesa STK Push",
-      "createdAt": "2026-11-23T18:57:30.904Z",
+      "createdAt": "2026-11-23T20:43:41.078Z",
       "mpesa": {
-        "checkoutRequestId": "ws_CO_23112026215731188797510626",
+        "checkoutRequestId": "ws_CO_23112026234341185797510626",
         "checkoutRequestIds": [
-          "ws_CO_23112026215731188797510626"
+          "ws_CO_23112026234341185797510626"
         ],
-        "merchantRequestId": "4340-4ad5-b001-ea2a5762baf1255710",
-        "initiatedAt": "2026-11-23T18:57:31.823Z",
-        "receipt": null,
-        "amount": null
-      }
-    },
-    {
-      "id": "PB-20261123-BAB987",
-      "customer": {
-        "userId": "12effd3f-bf07-46b5-a4e0-28eed2b62d49",
-        "name": "ROBERT WACHIRA",
-        "email": "rnjoroge303@gmail.com",
-        "phone": "+254797510626",
-        "address": "mukuru kayaba, enterprise rd, naiobi kenya"
+        "merchantRequestId": "11d0-4f32-9b02-f8e268086cb91186943",
+        "initiatedAt": "2026-11-23T20:43:41.306Z",
+        "receipt": "UKN733W5TY",
+        "amount": 60,
+        "completedAt": "2026-11-23T20:43:52.356Z"
       },
-      "paymentPhone": "254797510626",
-      "items": [
-        {
-          "productId": "PB-20261120-9AD78E",
-          "name": "lotion",
-          "quantity": 1,
-          "unitPrice": 10,
-          "lineTotal": 10
-        }
-      ],
-      "total": 10,
-      "note": "",
-      "status": "received",
-      "paymentStatus": "pending",
-      "paymentMethod": "M-Pesa STK Push",
-      "createdAt": "2026-11-23T16:50:59.502Z",
-      "mpesa": {
-        "checkoutRequestId": "ws_CO_23112026195106873797510626",
-        "checkoutRequestIds": [
-          "ws_CO_23112026195106873797510626"
-        ],
-        "merchantRequestId": "d63a-4fa4-8cbf-c6a70016ecab62532439",
-        "initiatedAt": "2026-11-23T16:51:05.967Z",
-        "receipt": null,
-        "amount": null
-      }
+      "paymentResultCode": 0,
+      "paymentResultDescription": "The service request is processed successfully.",
+      "paymentReference": "UKN733W5TY",
+      "paymentConfirmedAt": "2026-11-23T20:43:52.356Z"
     }
   ]
 }

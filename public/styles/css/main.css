@@ -294,6 +294,15 @@ a{
     font-family: "Playfair Display", serif;
     font-size: 1.65rem;
 }
+.brandLogo{
+    display: block;
+    width: 104px;
+    height: 104px;
+    flex: 0 0 auto;
+    border-radius: 5px;
+    background: white;
+    object-fit: contain;
+}
 .brandText{
     display: grid;
     gap: 2px;
@@ -766,6 +775,10 @@ a{
         height: 36px;
         font-size: 1.4rem;
     }
+    .brandLogo{
+        width: 68px;
+        height: 68px;
+    }
     .brandText strong{
         font-size: 1.08rem;
     }
@@ -820,6 +833,10 @@ a{
         height: 32px;
         border-radius: 10px 10px 10px 3px;
         font-size: 1.25rem;
+    }
+    .brandLogo{
+        width: 58px;
+        height: 58px;
     }
     .brandText strong{
         font-size: 0.98rem;
@@ -935,6 +952,7 @@ a{
     color: var(--rose);
     font-size: 0.78rem;
     font-weight: 600;
+    text-decoration: none;
 }
 .orderHistory{
     margin: 34px 0 20px;
@@ -1078,6 +1096,26 @@ a{
     border-color: var(--rose);
     color: var(--rose);
 }
+.orderDeleteButton{
+    min-height: 36px;
+    padding: 0 11px;
+    border: 1px solid #e3b8c2;
+    border-radius: 5px;
+    background: white;
+    color: #a34242;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.orderDeleteButton:hover{
+    border-color: #a34242;
+    background: #fff7f7;
+}
+.orderDeleteButton:disabled{
+    opacity: 0.6;
+    cursor: wait;
+}
 .orderPaymentForm{
     display: grid;
     grid-template-columns: minmax(170px, 1fr) minmax(200px, 1.2fr) auto;
@@ -1125,6 +1163,31 @@ a{
     grid-column: 1 / -1;
     color: #a34242;
     font-size: 0.72rem;
+}
+.ordersPage{
+    display: block;
+    min-height: 100vh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "DM Sans", sans-serif;
+}
+.ordersPage .checkoutMain{
+    padding-top: 32px;
+}
+.ordersPage .orderHistory{
+    margin-top: 0;
+}
+.ordersPage .orderHistoryHeading h1{
+    margin: 6px 0;
+    color: var(--ink);
+    font-family: "Playfair Display", serif;
+    font-size: 2rem;
+    font-weight: 500;
+}
+.ordersPage .orderHistoryClose{
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
 }
 @media (max-width: 700px){
     .accountAction span{

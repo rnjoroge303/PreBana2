@@ -52,6 +52,18 @@ const initiateStkPush = async ({ phoneNumber, amount, accountReference, transact
     if (!callbackUrl) {
         throw new Error('M-Pesa callback URL is not configured');
     }
+    let parsedCallbackUrl;
+    try {
+        parsedCallbackUrl = new URL(callbackUrl);
+    } catch {
+        throw new Error('M-Pesa callback URL must be a valid absolute URL');
+    }
+    if (parsedCallbackUrl.protocol !== 'https:') {
+        throw new Error('M-Pesa callback URL must use HTTPS');
+    }
+    if (process.env.VERCEL !== '1' && parsedCallbackUrl.hostname.endsWith('.vercel.app')) {
+        console.warn('[M-Pesa STK] This app is running locally but the callback points to a separate Vercel deployment. The local order file will not be shared; use an HTTPS tunnel to this app.');
+    }
 
     const normalizedPhone = formatPhoneNumber(phoneNumber);
     const numericAmount = Number(amount);

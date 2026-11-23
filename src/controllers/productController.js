@@ -258,7 +258,7 @@ async function validateProductFields(req, uploadedFiles){
 
 async function showStore(req, res, next){
     try{
-        const products = await readProducts();
+        const products = (await readProducts()).filter((product) => Number(product.stock) > 0);
         res.render("home", { products });
     } catch(error){
         next(error);

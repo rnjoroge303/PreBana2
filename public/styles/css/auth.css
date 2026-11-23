@@ -76,6 +76,14 @@ a{
     font-family: "Playfair Display", serif;
     font-size: 1.4rem;
 }
+.authBrandLogo{
+    display: block;
+    width: 92px;
+    height: 92px;
+    border-radius: 5px;
+    background: white;
+    object-fit: contain;
+}
 .authBrand > span:last-child{
     display: grid;
     gap: 2px;

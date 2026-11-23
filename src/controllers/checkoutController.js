@@ -251,10 +251,10 @@ async function applyMpesaCallback(checkoutRequestId, callback) {
     });
 }
 
-async function deleteOrder(orderId) {
-    const deletedOrder = await orderStore.deleteOrder(orderId);
+async function removeOrder(orderId, canDelete) {
+    const deletedOrder = await orderStore.deleteOrder(orderId, canDelete);
     if (!deletedOrder) {
-        throw new Error("Order not found.");
+        throw new Error(canDelete ? "Order not found or cannot be deleted." : "Order not found.");
     }
     try {
         await productController.restoreStock(
@@ -271,6 +271,16 @@ async function deleteOrder(orderId) {
         throw stockError;
     }
     return deletedOrder;
+}
+
+async function deleteOrder(orderId) {
+    return removeOrder(orderId);
+}
+
+async function deleteCustomerOrder(orderId, userId) {
+    return removeOrder(orderId, (order) =>
+        order.customer?.userId === userId && order.paymentStatus !== "paid"
+    );
 }
 
 function normalizeCart(items) {
@@ -297,7 +307,8 @@ function normalizeCart(items) {
 
 async function showCheckout(req, res, next) {
     try {
-        const products = await productController.readProducts();
+        const products = (await productController.readProducts())
+            .filter((product) => Number(product.stock) > 0);
         res.render("checkout", {
             products,
             customerEmail: req.authUser.email
@@ -418,6 +429,7 @@ module.exports = {
     recordMpesaPush,
     applyMpesaCallback,
     deleteOrder,
+    deleteCustomerOrder,
     buildReceiptHtml,
     buildShippingLabelHtml,
     showCheckout

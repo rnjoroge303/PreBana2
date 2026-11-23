@@ -60,8 +60,29 @@ router.get('/orders/:id/receipt.pdf', requireRole('client'), async (req, res, ne
 router.get('/orders', requireRole('client'), async (req, res, next) => {
     try {
         res.set('Cache-Control', 'no-store');
+        return res.render('orders', {
+            orders: await checkoutController.listCustomerOrders(req.authUser.id)
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+router.get('/orders/data', requireRole('client'), async (req, res, next) => {
+    try {
+        res.set('Cache-Control', 'no-store');
         return res.json({ orders: await checkoutController.listCustomerOrders(req.authUser.id) });
     } catch (error) {
+        return next(error);
+    }
+});
+router.delete('/orders/:id', requireRole('client'), async (req, res, next) => {
+    try {
+        const order = await checkoutController.deleteCustomerOrder(req.params.id, req.authUser.id);
+        return res.json({ success: true, orderId: order.id });
+    } catch (error) {
+        if (error.message === 'Order not found or cannot be deleted.') {
+            return res.status(404).json({ error: 'Order not found or it can no longer be deleted.' });
+        }
         return next(error);
     }
 });

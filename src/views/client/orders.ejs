@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ad5b78">
+    <title>My orders | PreBana Cosmetics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Playfair+Display:wght@500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/styles/css/main.css">
+    <link rel="stylesheet" href="/styles/css/product.css">
+    <link rel="stylesheet" href="/styles/css/checkout.css">
+</head>
+
+<body class="ordersPage">
+    <div class="announcement">
+        <span>Beauty for the everyday, and everything in between.</span>
+        <span class="announcementNote">PREBANA COSMETICS <span aria-hidden="true">·</span> NAIROBI</span>
+    </div>
+    <header class="checkoutHeader">
+        <a class="logo" href="/pre/store" aria-label="PreBana Cosmetics home">
+            <img class="brandLogo" src="/uploads/logo/preLogo.jpeg" alt="PreBana Cosmetics">
+        </a>
+        <a class="checkoutBack" href="/pre/store">← Back to shop</a>
+    </header>
+    <main class="checkoutMain">
+        <section class="orderHistory" aria-labelledby="ordersTitle">
+            <div class="orderHistoryHeading">
+                <div>
+                    <p class="eyebrow"><span class="eyebrowLine"></span> YOUR ACCOUNT</p>
+                    <h1 id="ordersTitle">My orders</h1>
+                    <p>Order details, delivery information, and payment verification.</p>
+                </div>
+                <a class="orderHistoryClose" href="/pre/store">Back to shopping</a>
+            </div>
+            <p class="orderHistoryFeedback" id="ordersFeedback" role="status" aria-live="polite"></p>
+            <div class="orderHistoryList" id="ordersList"></div>
+        </section>
+    </main>
+    <script type="application/json" id="ordersData"><%- JSON.stringify(orders).replace(/</g, '\\u003c') %></script>
+    <script>
+        const ordersList = document.getElementById("ordersList");
+        const ordersFeedback = document.getElementById("ordersFeedback");
+        let orders = JSON.parse(document.getElementById("ordersData").textContent);
+
+        function formatOrderDate(value) {
+            const date = new Date(value);
+            return Number.isNaN(date.getTime())
+                ? "Date unavailable"
+                : date.toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" });
+        }
+
+        function appendOrderText(parent, label, value) {
+            const line = document.createElement("p");
+            const title = document.createElement("strong");
+            title.textContent = `${label}: `;
+            line.append(title, document.createTextNode(value || "Not provided"));
+            parent.append(line);
+        }
+
+        function renderOrder(order) {
+            const card = document.createElement("article");
+            const heading = document.createElement("div");
+            const orderId = document.createElement("h3");
+            const date = document.createElement("time");
+            const status = document.createElement("span");
+            const details = document.createElement("div");
+            const itemList = document.createElement("ul");
+            const total = document.createElement("p");
+            const paymentLabels = {
+                paid: "Paid",
+                pending: "M-Pesa prompt sent or awaiting payment",
+                awaiting_verification: "Waiting for store verification",
+                failed: "Payment failed — retry or submit a code",
+                cancelled: "Payment cancelled — retry or submit a code",
+                review_required: "Payment received — store review required"
+            };
+            const paymentStatus = paymentLabels[order.paymentStatus] || "Payment pending";
+
+            card.className = "orderHistoryCard";
+            card.dataset.orderId = order.id;
+            heading.className = "orderHistoryCardHeading";
+            orderId.textContent = `Order ${order.id}`;
+            date.dateTime = order.createdAt || "";
+            date.textContent = formatOrderDate(order.createdAt);
+            status.className = `orderHistoryStatus ${order.paymentStatus === "paid" ? "isPaid" : order.paymentStatus === "awaiting_verification" ? "isWaiting" : ""}`;
+            status.textContent = paymentStatus;
+            heading.append(orderId, date, status);
+            details.className = "orderHistoryDetails";
+            appendOrderText(details, "Delivery address", order.customer?.address);
+            appendOrderText(details, "Phone", order.customer?.phone);
+            appendOrderText(details, "Email", order.customer?.email);
+            appendOrderText(details, "Order status", order.status || "received");
+            if (order.paymentReference) {
+                appendOrderText(details, "M-Pesa receipt / code", order.paymentReference);
+            }
+            if (order.note) {
+                appendOrderText(details, "Order note", order.note);
+            }
+            itemList.className = "orderHistoryItems";
+            (Array.isArray(order.items) ? order.items : []).forEach((item) => {
+                const listItem = document.createElement("li");
+                listItem.textContent = `${item.name} × ${item.quantity} — KSh ${Number(item.lineTotal || 0).toLocaleString("en-KE")}`;
+                itemList.append(listItem);
+            });
+            total.className = "orderHistoryTotal";
+            total.textContent = `Total: KSh ${Number(order.total || 0).toLocaleString("en-KE")}`;
+            card.append(heading, details, itemList, total);
+
+            if (order.paymentStatus === "paid") {
+                const receiptActions = document.createElement("div");
+                const printReceipt = document.createElement("a");
+                const downloadReceipt = document.createElement("a");
+                const receiptPath = `/pre/orders/${encodeURIComponent(order.id)}/receipt`;
+                receiptActions.className = "orderReceiptActions";
+                printReceipt.href = receiptPath;
+                printReceipt.target = "_blank";
+                printReceipt.rel = "noopener";
+                printReceipt.textContent = "Print thermal receipt";
+                downloadReceipt.href = `${receiptPath}.pdf`;
+                downloadReceipt.textContent = "Download PDF";
+                receiptActions.append(printReceipt, downloadReceipt);
+                card.append(receiptActions);
+            } else {
+                const stkForm = document.createElement("form");
+                const stkLabel = document.createElement("label");
+                const stkPhone = document.createElement("input");
+                const stkButton = document.createElement("button");
+                stkForm.className = "orderPaymentForm";
+                stkLabel.textContent = "Phone to receive an M-Pesa prompt";
+                stkPhone.type = "tel";
+                stkPhone.value = order.paymentPhone || order.customer?.phone || "";
+                stkPhone.required = true;
+                stkPhone.autocomplete = "tel";
+                stkButton.type = "submit";
+                stkButton.textContent = "Send STK prompt";
+                stkForm.append(stkLabel, stkPhone, stkButton);
+                stkForm.addEventListener("submit", async (event) => {
+                    event.preventDefault();
+                    stkButton.disabled = true;
+                    stkButton.textContent = "Sending...";
+                    try {
+                        const response = await fetch(`/pre/orders/${encodeURIComponent(order.id)}/mpesa`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ phoneNumber: stkPhone.value })
+                        });
+                        const result = await response.json();
+                        if (!response.ok) {
+                            throw new Error(result.error || "The M-Pesa prompt could not be sent.");
+                        }
+                        ordersFeedback.textContent = "M-Pesa prompt sent. Approve it on your phone; your order will update after confirmation.";
+                        stkButton.textContent = "Prompt sent";
+                    } catch (error) {
+                        ordersFeedback.textContent = error.message;
+                        stkButton.disabled = false;
+                        stkButton.textContent = "Send STK prompt";
+                    }
+                });
+                card.append(stkForm);
+
+                const form = document.createElement("form");
+                const label = document.createElement("label");
+                const input = document.createElement("input");
+                const submit = document.createElement("button");
+                const error = document.createElement("p");
+                form.className = "orderPaymentForm";
+                label.textContent = "Check your M-Pesa transaction code";
+                input.name = "paymentReference";
+                input.required = true;
+                input.maxLength = 20;
+                input.autocomplete = "off";
+                input.placeholder = "e.g. QGH7X2ABC1";
+                submit.type = "submit";
+                submit.textContent = "Confirm M-Pesa code";
+                error.className = "orderPaymentError";
+                error.hidden = true;
+                form.append(label, input, submit, error);
+                form.addEventListener("submit", async (event) => {
+                    event.preventDefault();
+                    error.hidden = true;
+                    submit.disabled = true;
+                    submit.textContent = "Submitting...";
+                    try {
+                        const response = await fetch(`/pre/orders/${encodeURIComponent(order.id)}/mpesa-confirmation`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ paymentReference: input.value })
+                        });
+                        const result = await response.json();
+                        if (!response.ok) {
+                            throw new Error(result.error || "Payment confirmation could not be submitted.");
+                        }
+                        window.location.href = `/pre/orders/${encodeURIComponent(order.id)}/receipt`;
+                    } catch (requestError) {
+                        error.textContent = requestError.message;
+                        error.hidden = false;
+                        submit.disabled = false;
+                        submit.textContent = "Confirm M-Pesa code";
+                    }
+                });
+                card.append(form);
+
+                const deleteActions = document.createElement("div");
+                const deleteButton = document.createElement("button");
+                deleteActions.className = "orderReceiptActions";
+                deleteButton.type = "button";
+                deleteButton.className = "orderDeleteButton";
+                deleteButton.textContent = "Delete unpaid order";
+                deleteButton.addEventListener("click", async () => {
+                    if (!window.confirm(`Delete order ${order.id}? This will return its items to stock.`)) {
+                        return;
+                    }
+                    deleteButton.disabled = true;
+                    deleteButton.textContent = "Deleting...";
+                    try {
+                        const response = await fetch(`/pre/orders/${encodeURIComponent(order.id)}`, {
+                            method: "DELETE"
+                        });
+                        const result = await response.json();
+                        if (!response.ok) {
+                            throw new Error(result.error || "This order could not be deleted.");
+                        }
+                        orders = orders.filter((entry) => entry.id !== order.id);
+                        card.remove();
+                        updateEmptyState();
+                        ordersFeedback.textContent = "Order deleted.";
+                    } catch (error) {
+                        ordersFeedback.textContent = error.message;
+                        deleteButton.disabled = false;
+                        deleteButton.textContent = "Delete unpaid order";
+                    }
+                });
+                deleteActions.append(deleteButton);
+                card.append(deleteActions);
+            }
+            return card;
+        }
+
+        function updateEmptyState() {
+            if (!ordersList.childElementCount) {
+                ordersFeedback.textContent = "You have not placed any orders yet.";
+            }
+        }
+
+        function renderOrders(nextOrders) {
+            orders = nextOrders;
+            ordersList.replaceChildren(...orders.map(renderOrder));
+            ordersFeedback.textContent = orders.length ? "" : "You have not placed any orders yet.";
+        }
+
+        async function refreshOrderPaymentStatuses() {
+            if (document.hidden || ordersList.contains(document.activeElement)) return;
+            try {
+                const response = await fetch("/pre/orders/data", { cache: "no-store" });
+                if (!response.ok) return;
+                const result = await response.json();
+                const nextOrders = Array.isArray(result.orders) ? result.orders : [];
+                const currentStatuses = new Map(orders.map((order) => [order.id, order.paymentStatus]));
+                const hasChanged = nextOrders.length !== orders.length
+                    || nextOrders.some((order) => currentStatuses.get(order.id) !== order.paymentStatus);
+                if (hasChanged) {
+                    renderOrders(nextOrders);
+                }
+            } catch (error) {
+                console.warn("Could not refresh order payment statuses:", error);
+            }
+        }
+
+        renderOrders(orders);
+        window.setInterval(refreshOrderPaymentStatuses, 5000);
+    </script>
+</body>
+
+</html>

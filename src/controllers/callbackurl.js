@@ -6,11 +6,9 @@ function acknowledge(res) {
 
 function getCallbackMetadata(callback) {
     const items = callback.CallbackMetadata?.Item;
-    if (!Array.isArray(items)) {
-        return {};
-    }
+    const itemList = Array.isArray(items) ? items : (items ? [items] : []);
 
-    return items.reduce((metadata, item) => {
+    return itemList.reduce((metadata, item) => {
         if (item && typeof item.Name === 'string') {
             metadata[item.Name] = item.Value;
         }
@@ -80,7 +78,7 @@ async function handleMpesaCallback(req, res) {
                 checkoutRequestId,
                 merchantRequestId: callback.MerchantRequestID || null
             });
-            return res.status(500).json({ ResultCode: 1, ResultDesc: 'Order not found for checkout request' });
+            return acknowledge(res);
         }
         console.info('[M-Pesa callback processed]', {
             checkoutRequestId,
@@ -90,7 +88,7 @@ async function handleMpesaCallback(req, res) {
         return acknowledge(res);
     } catch (error) {
         console.error('[M-Pesa callback] Payment update failed:', error.message);
-        return res.status(500).json({ ResultCode: 1, ResultDesc: 'Payment update failed' });
+        return acknowledge(res);
     }
 }
 

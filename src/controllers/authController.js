@@ -19,7 +19,8 @@ function usesDatabaseStore(){
             "MYSQL_ADDON_HOST",
             "MYSQL_ADDON_USER",
             "MYSQL_ADDON_PASSWORD",
-            "MYSQL_ADDON_DB"
+            "MYSQL_ADDON_DB",
+            "MYSQL_ADDON_URI"
         ].some((key) => Boolean(process.env[key]));
 }
 
@@ -34,6 +35,18 @@ function normalizeEmail(value){
 
 function isValidEmail(email){
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function getAdminBootstrapConfig(){
+    const email = normalizeEmail(process.env.ADMIN_EMAIL);
+    const password = String(process.env.ADMIN_PASSWORD || "");
+    if (!email && !password){
+        return null;
+    }
+    if (!isValidEmail(email) || Buffer.byteLength(password, "utf8") < 12 || Buffer.byteLength(password, "utf8") > 72){
+        throw new Error("Configure ADMIN_EMAIL and an ADMIN_PASSWORD between 12 and 72 bytes to create the initial administrator.");
+    }
+    return { email, password };
 }
 
 async function readRawUsers(){
@@ -92,6 +105,7 @@ async function getDatabasePool(){
                     ]
                 );
             }
+            await provisionDatabaseAdmin(pool);
             return pool;
         })().catch((error) => {
             databaseStorePromise = null;
@@ -99,6 +113,68 @@ async function getDatabasePool(){
         });
     }
     return databaseStorePromise;
+}
+
+async function provisionDatabaseAdmin(pool){
+    const bootstrap = getAdminBootstrapConfig();
+    if (!bootstrap){
+        return;
+    }
+    const [existingUsers] = await pool.execute(
+        "SELECT role FROM prebana_users WHERE email = ?",
+        [bootstrap.email]
+    );
+    if (existingUsers.length){
+        if (normalizeRole(existingUsers[0].role) !== "admin"){
+            throw new Error("ADMIN_EMAIL is already registered as a non-admin user.");
+        }
+        return;
+    }
+
+    await pool.execute(
+        `INSERT IGNORE INTO prebana_users (id, email, role, password_hash, created_at)
+         VALUES (?, ?, 'admin', ?, ?)`,
+        [
+            crypto.randomUUID(),
+            bootstrap.email,
+            await bcrypt.hash(bootstrap.password, bcryptRounds),
+            new Date()
+        ]
+    );
+    const [createdUsers] = await pool.execute(
+        "SELECT role FROM prebana_users WHERE email = ?",
+        [bootstrap.email]
+    );
+    if (!createdUsers.length || normalizeRole(createdUsers[0].role) !== "admin"){
+        throw new Error("Could not provision the configured administrator account.");
+    }
+}
+
+async function provisionFileAdmin(){
+    const bootstrap = getAdminBootstrapConfig();
+    if (!bootstrap){
+        return;
+    }
+    const result = await updateUsers(async (users) => {
+        const existing = users.find((user) => user.email === bootstrap.email);
+        if (existing){
+            if (existing.role !== "admin"){
+                throw new Error("ADMIN_EMAIL is already registered as a non-admin user.");
+            }
+            return { skipWrite: true };
+        }
+        const passwordHash = await bcrypt.hash(bootstrap.password, bcryptRounds);
+        const user = {
+            id: crypto.randomUUID(),
+            email: bootstrap.email,
+            role: "admin",
+            passwordHash,
+            createdAt: new Date().toISOString()
+        };
+        users.push(user);
+        return { user };
+    });
+    return result.user;
 }
 
 async function readUsers(){
@@ -193,6 +269,7 @@ async function initializeUserStore(){
     if (JSON.stringify(originalEntries) !== JSON.stringify(users)){
         await writeUsers(users);
     }
+    await provisionFileAdmin();
 }
 
 function landingForRole(role){

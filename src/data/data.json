@@ -6,7 +6,7 @@
       "category": "hair",
       "description": "Dhdydhd",
       "price": 900,
-      "stock": 18,
+      "stock": 19,
       "images": [
         {
           "url": "/uploads/products/e331f432-0286-429d-b0aa-8dc694ba6ed2.jpg",
@@ -21,7 +21,7 @@
       "category": "body",
       "description": "body care",
       "price": 10,
-      "stock": 5,
+      "stock": 6,
       "images": [
         {
           "url": "/uploads/products/2f241c79-cc7e-4927-a171-56203cd04919.jpg",
@@ -47,15 +47,10 @@
       "category": "featured",
       "description": "hand sanitizer",
       "price": 50,
-      "stock": 2,
-      "images": [
-        {
-          "url": "/uploads/products/f117411f-8857-4270-b67a-de9be1834685.png",
-          "alt": "rosy sanitizer"
-        }
-      ],
+      "stock": 0,
+      "images": [],
       "createdAt": "2026-10-22T06:48:35.577Z",
-      "updatedAt": "2026-11-20T10:37:58.704Z"
+      "updatedAt": "2026-11-23T20:43:15.821Z"
     }
   ]
 }

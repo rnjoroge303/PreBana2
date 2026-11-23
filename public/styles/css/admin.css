@@ -95,6 +95,15 @@ a {
     font-weight: 700;
 }
 
+.adminBrandLogo {
+    display: block;
+    width: 74px;
+    height: 74px;
+    border-radius: 5px;
+    background: white;
+    object-fit: contain;
+}
+
 .adminBrand>span:last-child {
     display: grid;
     gap: 2px;
