@@ -20,6 +20,8 @@ Provision the hosted MySQL database separately; the application creates its tabl
 
 The GitHub Actions workflow in `.github/workflows/ci.yml` runs on pull requests and pushes to `main`. It installs the locked dependencies and runs `npm test`, which checks JavaScript syntax and compiles the EJS templates. Run the same check locally with `npm test`.
 
+After validation succeeds on a push to `main`, the workflow triggers the Vercel Deploy Hook. Add its URL as the `VERCEL_DEPLOY_HOOK_URL` repository secret in GitHub under **Settings → Secrets and variables → Actions**. The workflow never stores the URL in the repository. Configure the hook for the production branch (`main`). Pull requests run validation but do not trigger this hook. If Vercel's automatic Git deployment also deploys pushes to `main`, disable one of the production deployment triggers to avoid duplicate builds.
+
 For Vercel preview and production deployments, import this GitHub repository into Vercel (or connect it in the Vercel project's **Settings → Git**) and set `main` as the production branch. Vercel then creates preview deployments for pull requests and production deployments for pushes to `main`. Configure the database, Blob, and `JWT_SECRET` environment variables in the Vercel project for the appropriate deployment environments. The GitHub Actions check does not itself deploy to Vercel; require the `CI / validate` status check in GitHub branch protection if merges must wait for validation.
 
 ## Local M-Pesa callback testing

@@ -24,3 +24,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Trigger Vercel deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "::error::Add the VERCEL_DEPLOY_HOOK_URL repository secret."
+            exit 1
+          fi
+          curl --fail --silent --show-error --request POST --output /dev/null "$VERCEL_DEPLOY_HOOK_URL"
