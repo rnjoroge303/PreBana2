@@ -375,7 +375,21 @@
             total.textContent = `Total: KSh ${Number(order.total || 0).toLocaleString("en-KE")}`;
             card.append(heading, details, itemList, total);
 
-            if (order.paymentStatus !== "paid") {
+            if (order.paymentStatus === "paid") {
+                const receiptActions = document.createElement("div");
+                const printReceipt = document.createElement("a");
+                const downloadReceipt = document.createElement("a");
+                const receiptPath = `/pre/orders/${encodeURIComponent(order.id)}/receipt`;
+                receiptActions.className = "orderReceiptActions";
+                printReceipt.href = receiptPath;
+                printReceipt.target = "_blank";
+                printReceipt.rel = "noopener";
+                printReceipt.textContent = "Print thermal receipt";
+                downloadReceipt.href = `${receiptPath}.pdf`;
+                downloadReceipt.textContent = "Download PDF";
+                receiptActions.append(printReceipt, downloadReceipt);
+                card.append(receiptActions);
+            } else {
                 const stkForm = document.createElement("form");
                 const stkLabel = document.createElement("label");
                 const stkPhone = document.createElement("input");
@@ -445,7 +459,7 @@
                         if (!response.ok) {
                             throw new Error(result.error || "Payment confirmation could not be submitted.");
                         }
-                        await loadOrders();
+                        window.location.href = `/pre/orders/${encodeURIComponent(order.id)}/receipt`;
                     } catch (requestError) {
                         error.textContent = requestError.message;
                         error.hidden = false;

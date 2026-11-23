@@ -237,6 +237,22 @@
     cursor: not-allowed;
 }
 
+.checkoutCancelButton {
+    justify-self: start;
+    padding: 4px 0;
+    border: 0;
+    background: transparent;
+    color: #78847d;
+    font: inherit;
+    font-size: 0.72rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.checkoutCancelButton:hover {
+    color: #ad5b78;
+}
+
 .paymentNote {
     margin: 2px 0 0;
     color: #82908a;

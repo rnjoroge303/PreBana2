@@ -1,1 +1,11 @@
-{}
+{
+  "users": [
+    {
+      "id": "12effd3f-bf07-46b5-a4e0-28eed2b62d49",
+      "email": "rnjoroge303@gmail.com",
+      "role": "client",
+      "passwordHash": "$2b$12$D46VMvEiUyE5Kfc0LYzRiub/XrKNaiMkGjqnsNsGBbQDB1UMYPFHK",
+      "createdAt": "2026-11-23T16:50:37.713Z"
+    }
+  ]
+}

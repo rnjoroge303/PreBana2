@@ -1055,6 +1055,29 @@ a{
     font-size: 0.83rem;
     font-weight: 700;
 }
+.orderReceiptActions{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 13px;
+}
+.orderReceiptActions a{
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    padding: 0 11px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: white;
+    color: var(--ink);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.orderReceiptActions a:hover{
+    border-color: var(--rose);
+    color: var(--rose);
+}
 .orderPaymentForm{
     display: grid;
     grid-template-columns: minmax(170px, 1fr) minmax(200px, 1.2fr) auto;

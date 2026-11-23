@@ -75,6 +75,8 @@
                     <p class="checkoutError" id="checkoutError" role="alert" hidden></p>
                     <button class="placeOrderButton" id="placeOrderButton" type="submit">Place order &amp; pay with
                         M-Pesa <span aria-hidden="true">→</span></button>
+                    <button class="checkoutCancelButton" id="cancelCheckoutButton" type="button">Cancel order and
+                        clear bag</button>
                     <p class="paymentNote">An M-Pesa STK prompt will be sent to your phone after you place the order.
                     </p>
                 </form>
@@ -128,7 +130,8 @@
                 <h2 id="orderReceivedTitle">Your order is being processed</h2>
                 <p id="orderReceivedMessage">Your payment has been confirmed by M-Pesa.</p>
                 <p class="orderReference">Order <strong id="successOrderId"></strong></p>
-                <a class="heroCta" href="/pre/store#orders">View my orders <span aria-hidden="true">→</span></a>
+                <a class="heroCta" id="viewReceiptLink" href="/pre/store#orders">View receipt <span
+                        aria-hidden="true">→</span></a>
             </div>
         </section>
         <script type="application/json"
@@ -149,6 +152,8 @@
         const mpesaError = document.getElementById("mpesaError");
         const confirmMpesaButton = document.getElementById("confirmMpesaButton");
         const retryMpesaButton = document.getElementById("retryMpesaButton");
+        const cancelCheckoutButton = document.getElementById("cancelCheckoutButton");
+        const viewReceiptLink = document.getElementById("viewReceiptLink");
         const mpesaModalMessage = document.getElementById("mpesaModalMessage");
         const customerPhoneInput = document.getElementById("customerPhone");
         const ownPaymentPhoneInput = document.getElementById("ownPaymentPhone");
@@ -257,6 +262,7 @@
                 checkoutLayout.hidden = true;
                 currentOrderId = result.orderId;
                 document.getElementById("successOrderId").textContent = result.orderId;
+                viewReceiptLink.href = `/pre/orders/${encodeURIComponent(currentOrderId)}/receipt`;
                 mpesaModal.hidden = false;
                 await sendMpesaPrompt();
             } catch (error) {
@@ -311,6 +317,9 @@
                     document.getElementById("orderReceivedMessage").textContent = result.paymentReference
                         ? `Payment confirmed by M-Pesa. Receipt: ${result.paymentReference}.`
                         : "Your payment has been confirmed by M-Pesa.";
+                    window.setTimeout(() => {
+                        window.location.href = viewReceiptLink.href;
+                    }, 2500);
                     return;
                 }
                 if (["failed", "cancelled", "review_required"].includes(result.paymentStatus)) {
@@ -349,7 +358,7 @@
                 orderReceivedModal.hidden = false;
                 document.getElementById("orderReceivedMessage").textContent = `Payment confirmed. M-Pesa receipt: ${result.order.paymentReference}.`;
                 window.setTimeout(() => {
-                    window.location.href = "/pre/store#orders";
+                    window.location.href = viewReceiptLink.href;
                 }, 2500);
             } catch (error) {
                 mpesaError.textContent = error.message;
@@ -357,6 +366,11 @@
                 confirmMpesaButton.disabled = false;
                 confirmMpesaButton.innerHTML = 'Confirm M-Pesa code <span aria-hidden="true">→</span>';
             }
+        });
+
+        cancelCheckoutButton.addEventListener("click", () => {
+            window.localStorage.removeItem(cartStorageKey);
+            window.location.href = "/pre/store";
         });
 
         updateCart();

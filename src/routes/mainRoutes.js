@@ -1,6 +1,7 @@
 const express = require('express');
 const adminController = require('../controllers/adminController');
 const checkoutController = require('../controllers/checkoutController');
+const receiptController = require('../controllers/receiptController');
 const paymentController = require('../controllers/paymentController');
 const productController = require('../controllers/productController');
 const authController = require('../controllers/authController');
@@ -23,6 +24,39 @@ router.get('/checkout', requireRole('client'), checkoutController.showCheckout);
 router.post('/checkout', requireRole('client'), checkoutController.placeOrder);
 router.post('/orders/:id/mpesa', requireRole('client'), paymentController.initiateOrderPayment);
 router.get('/orders/:id/payment-status', requireRole('client'), paymentController.getOrderPaymentStatus);
+router.get('/orders/:id/receipt', requireRole('client'), async (req, res, next) => {
+    try {
+        const order = await checkoutController.getOrderById(req.params.id);
+        if (!order || order.customer?.userId !== req.authUser.id) {
+            return res.status(404).send('Order not found.');
+        }
+        if (order.paymentStatus !== 'paid') {
+            return res.status(409).send('A receipt is available after payment is confirmed.');
+        }
+        return res.type('html').send(receiptController.buildThermalReceiptHtml(order));
+    } catch (error) {
+        return next(error);
+    }
+});
+router.get('/orders/:id/receipt.pdf', requireRole('client'), async (req, res, next) => {
+    try {
+        const order = await checkoutController.getOrderById(req.params.id);
+        if (!order || order.customer?.userId !== req.authUser.id) {
+            return res.status(404).send('Order not found.');
+        }
+        if (order.paymentStatus !== 'paid') {
+            return res.status(409).send('A receipt is available after payment is confirmed.');
+        }
+        const pdf = await receiptController.buildThermalReceiptPdf(order);
+        const safeOrderId = String(order.id).replace(/[^a-zA-Z0-9_-]/g, '');
+        return res
+            .type('application/pdf')
+            .attachment(`PreBana-receipt-${safeOrderId}.pdf`)
+            .send(pdf);
+    } catch (error) {
+        return next(error);
+    }
+});
 router.get('/orders', requireRole('client'), async (req, res, next) => {
     try {
         res.set('Cache-Control', 'no-store');
