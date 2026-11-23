@@ -1,3 +1,181 @@
 {
-  "orders": []
+  "orders": [
+    {
+      "id": "PB-20261123-74ACBB",
+      "customer": {
+        "userId": "570a75e5-8d94-4a3f-88b3-7dbf54e30054",
+        "name": "ROBERT WACHIRA",
+        "email": "cladlegion@gmail.com",
+        "phone": "+254797510626",
+        "address": "mukuru kayaba, enterprise rd, naiobi kenya"
+      },
+      "paymentPhone": "254797510626",
+      "items": [
+        {
+          "productId": "PB-20261123-732DDB",
+          "name": "admin",
+          "quantity": 1,
+          "unitPrice": 900,
+          "lineTotal": 900
+        }
+      ],
+      "total": 900,
+      "note": "",
+      "status": "received",
+      "paymentStatus": "pending",
+      "paymentMethod": "M-Pesa STK Push",
+      "createdAt": "2026-11-23T12:52:58.845Z",
+      "mpesa": {
+        "checkoutRequestId": "ws_CO_23112026155300927797510626",
+        "checkoutRequestIds": [
+          "ws_CO_23112026155300927797510626"
+        ],
+        "merchantRequestId": "a1ef-49bd-9e49-e6bfc11466481865053",
+        "initiatedAt": "2026-11-23T12:52:59.508Z",
+        "receipt": null,
+        "amount": null
+      }
+    },
+    {
+      "id": "PB-20261123-A348D6",
+      "customer": {
+        "userId": "570a75e5-8d94-4a3f-88b3-7dbf54e30054",
+        "name": "ROBERT WACHIRA",
+        "email": "cladlegion@gmail.com",
+        "phone": "+254797510626",
+        "address": "mukuru kayaba, enterprise rd, naiobi kenya"
+      },
+      "paymentPhone": "254797510626",
+      "items": [
+        {
+          "productId": "PB-20261120-9AD78E",
+          "name": "lotion",
+          "quantity": 1,
+          "unitPrice": 10,
+          "lineTotal": 10
+        },
+        {
+          "productId": "PB-20261022-69FE80",
+          "name": "Amara Coco Butter",
+          "quantity": 1,
+          "unitPrice": 400,
+          "lineTotal": 400
+        },
+        {
+          "productId": "PB-20261022-5709EF",
+          "name": "rosy sanitizer",
+          "quantity": 1,
+          "unitPrice": 50,
+          "lineTotal": 50
+        }
+      ],
+      "total": 460,
+      "note": "",
+      "status": "received",
+      "paymentStatus": "pending",
+      "paymentMethod": "M-Pesa STK Push",
+      "createdAt": "2026-11-23T12:51:29.638Z",
+      "mpesa": {
+        "checkoutRequestId": "ws_CO_23112026155131618797510626",
+        "checkoutRequestIds": [
+          "ws_CO_23112026155131618797510626"
+        ],
+        "merchantRequestId": "003a-40be-9a14-24536c0b1a6b41219830",
+        "initiatedAt": "2026-11-23T12:51:30.356Z",
+        "receipt": null,
+        "amount": null
+      }
+    },
+    {
+      "id": "PB-20261123-55FAFD",
+      "customer": {
+        "userId": "570a75e5-8d94-4a3f-88b3-7dbf54e30054",
+        "name": "ROBERT WACHIRA",
+        "email": "cladlegion@gmail.com",
+        "phone": "+254797510626",
+        "address": "mukuru kayaba, enterprise rd, naiobi kenya"
+      },
+      "paymentPhone": "254797510626",
+      "items": [
+        {
+          "productId": "PB-20261120-9AD78E",
+          "name": "lotion",
+          "quantity": 2,
+          "unitPrice": 10,
+          "lineTotal": 20
+        }
+      ],
+      "total": 20,
+      "note": "",
+      "status": "processing",
+      "paymentStatus": "paid",
+      "paymentMethod": "Confirmed by admin",
+      "createdAt": "2026-11-23T12:46:29.020Z",
+      "mpesa": {
+        "checkoutRequestId": "ws_CO_23112026154630687797510626",
+        "checkoutRequestIds": [
+          "ws_CO_23112026154630687797510626"
+        ],
+        "merchantRequestId": "da3c-4c86-83df-798649360ce41957740",
+        "initiatedAt": "2026-11-23T12:46:29.824Z",
+        "receipt": null,
+        "amount": null
+      },
+      "paymentReference": "UNK733TW6A",
+      "confirmationSubmittedAt": "2026-11-23T12:47:14.395Z",
+      "paymentConfirmedAt": "2026-11-23T12:49:00.329Z"
+    },
+    {
+      "id": "PB-20261120-3566C1",
+      "customer": {
+        "userId": "056e5ba7-5295-4c94-ae66-05173d9bffdc",
+        "name": "roberto",
+        "email": "johnndungu85@gmail.com",
+        "phone": "254797510626",
+        "address": "thika"
+      },
+      "paymentPhone": "254797510626",
+      "items": [
+        {
+          "productId": "PB-20261022-5709EF",
+          "name": "rosy sanitizer",
+          "quantity": 1,
+          "unitPrice": 50,
+          "lineTotal": 50
+        }
+      ],
+      "total": 50,
+      "note": "",
+      "status": "received",
+      "paymentStatus": "pending",
+      "paymentMethod": "pending confirmation",
+      "createdAt": "2026-11-20T12:19:54.576Z"
+    },
+    {
+      "id": "PB-20261120-3B1DF4",
+      "customer": {
+        "userId": "056e5ba7-5295-4c94-ae66-05173d9bffdc",
+        "name": "roberto",
+        "email": "johnndungu85@gmail.com",
+        "phone": "0724047499",
+        "address": "thika"
+      },
+      "paymentPhone": "0797510626",
+      "items": [
+        {
+          "productId": "PB-20261022-5709EF",
+          "name": "rosy sanitizer",
+          "quantity": 1,
+          "unitPrice": 50,
+          "lineTotal": 50
+        }
+      ],
+      "total": 50,
+      "note": "",
+      "status": "received",
+      "paymentStatus": "pending",
+      "paymentMethod": "pending confirmation",
+      "createdAt": "2026-11-20T12:19:14.840Z"
+    }
+  ]
 }
