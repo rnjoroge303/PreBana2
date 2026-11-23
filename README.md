@@ -1,18 +1,26 @@
 # PreBana2
 
-## Vercel account storage
+## Vercel account and product storage
 
-Vercel deployments use MySQL for account storage; local development without database variables continues to use `src/data/users.json`. Configure these environment variables in the Vercel project settings. Either naming scheme is supported:
+Vercel deployments use MySQL for account and product storage; local development continues to use the JSON files. Configure these environment variables in the Vercel project settings. Either naming scheme is supported:
 
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
 - Clever Cloud: `MYSQL_ADDON_HOST`, `MYSQL_ADDON_PORT`, `MYSQL_ADDON_USER`, `MYSQL_ADDON_PASSWORD`, `MYSQL_ADDON_DB`, or `MYSQL_ADDON_URI`
 - `DB_SSL=true` if required by the MySQL provider
 
-The application creates the `prebana_users` table on first use and imports existing accounts from `src/data/users.json` without replacing records already in MySQL. The MySQL user must have permission to create tables. Redeploy after setting the variables. Do not commit credentials or paste them into source files.
+The application creates the `prebana_users` and `prebana_products` tables on first use and imports existing records from the bundled JSON files when the corresponding MySQL table is empty. The MySQL user must have permission to create tables and modify rows. Product images uploaded on Vercel are stored in Vercel Blob; create a Blob store and set its `BLOB_READ_WRITE_TOKEN` in Vercel project settings. Redeploy after setting the variables. Do not commit credentials or paste them into source files.
+
+Set a unique, randomly generated `JWT_SECRET` in Vercel as well; the placeholder in `.env.example` is not suitable for production.
 
 To create the initial administrator, set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in the deployment environment (or local ignored `.env`) before starting the app. Use a unique password; it must be 12–72 bytes. The password is stored as a bcrypt hash, and these settings do not reset an existing admin account. If the configured email belongs to a non-admin account, startup fails instead of changing its role.
 
-Provision the hosted MySQL database separately; the application creates its user table, not the database server. This change moves account storage only. Product and order data still use JSON files and need a persistent store before those write flows can work reliably on Vercel.
+Provision the hosted MySQL database separately; the application creates its tables, not the database server. Order records still use JSON files and need a persistent store before order writes can work reliably across Vercel instances.
+
+## GitHub CI and Vercel deployments
+
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs on pull requests and pushes to `main`. It installs the locked dependencies and runs `npm test`, which checks JavaScript syntax and compiles the EJS templates. Run the same check locally with `npm test`.
+
+For Vercel preview and production deployments, import this GitHub repository into Vercel (or connect it in the Vercel project's **Settings → Git**) and set `main` as the production branch. Vercel then creates preview deployments for pull requests and production deployments for pushes to `main`. Configure the database, Blob, and `JWT_SECRET` environment variables in the Vercel project for the appropriate deployment environments. The GitHub Actions check does not itself deploy to Vercel; require the `CI / validate` status check in GitHub branch protection if merges must wait for validation.
 
 ## Local M-Pesa callback testing
 

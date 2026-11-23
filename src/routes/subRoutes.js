@@ -13,8 +13,11 @@ const imageExtensions = {
     'image/webp': '.webp',
     'image/avif': '.avif'
 };
-const upload = multer({
-    storage: multer.diskStorage({
+const isVercelDeployment = process.env.VERCEL === '1';
+const maxUploadBytes = isVercelDeployment ? 4 * 1024 * 1024 : 5 * 1024 * 1024;
+const uploadStorage = isVercelDeployment
+    ? multer.memoryStorage()
+    : multer.diskStorage({
         destination: (req, file, callback) => {
             fs.mkdir(uploadDirectory, { recursive: true })
                 .then(() => callback(null, uploadDirectory))
@@ -23,9 +26,11 @@ const upload = multer({
         filename: (req, file, callback) => {
             callback(null, `${crypto.randomUUID()}${imageExtensions[file.mimetype]}`);
         }
-    }),
+    });
+const upload = multer({
+    storage: uploadStorage,
     limits: {
-        fileSize: 5 * 1024 * 1024,
+        fileSize: maxUploadBytes,
         files: 6
     },
     fileFilter: (req, file, callback) => {
@@ -39,12 +44,15 @@ const upload = multer({
 function handleProductUpload(req, res, next){
     upload.array('images', 6)(req, res, (error) => {
         if (!error){
+            if (isVercelDeployment && (req.files || []).reduce((total, file) => total + file.size, 0) > maxUploadBytes){
+                return res.status(400).json({ error: 'Combined product images must be 4 MB or smaller on Vercel.' });
+            }
             return next();
         }
         let message = error.message;
         if (error instanceof multer.MulterError){
             if (error.code === 'LIMIT_FILE_SIZE'){
-                message = 'Each image must be 5 MB or smaller.';
+                message = `Each image must be ${isVercelDeployment ? '4' : '5'} MB or smaller.`;
             } else if (error.code === 'LIMIT_UNEXPECTED_FILE'){
                 message = 'Upload no more than six product images.';
             }
