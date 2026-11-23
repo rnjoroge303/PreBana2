@@ -1,9 +1,7 @@
 const express = require('express');
-const path = require('path');
-const controller = require('../controller/ordersctrl');
-const { initiateStkPush } = require('../controller/stkPush');
-const { getReceipt } = require('../controller/finalrecipt');
-const fs = require('fs');
+const controller = require('../controllers/ordersctrl');
+const { initiateStkPush } = require('../controllers/stkPush');
+const { getReceipt } = require('../controllers/finalrecipt');
 
 const {
   setPaymentStkDetails,
@@ -14,7 +12,7 @@ const {
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../views/pay.html'));
+  res.render('pay', { pageTitle: 'Payment' });
 });
 
 router.get('/api/details', async (req, res) => {
@@ -147,9 +145,7 @@ router.get('/api/mpesa/status/:checkoutRequestId', async (req, res) => {
 router.get('/receipt/:checkoutRequestId', async (req, res) => {
   try {
     const payment = await getReceipt(req.params.checkoutRequestId);
-    let html = fs.readFileSync(path.join(__dirname, '../views/finalReciptpdf.html'), 'utf8');
-    html = html.replace('<body>', `<body data-receipt='${JSON.stringify(payment).replace(/'/g, '&#39;')}'>`);
-    res.send(html);
+    res.render('finalReciptpdf', { receipt: payment });
   } catch (error) {
     res.status(409).send(error.message);
   }
