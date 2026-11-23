@@ -7,6 +7,21 @@ const { clearAuthCookie, issueAuthCookie, verifyRequestUser, verifyLegacyRequest
 const usersFile = path.join(__dirname, "..", "data", "users.json");
 const bcryptRounds = 12;
 let usersWriteQueue = Promise.resolve();
+let databaseStorePromise;
+
+function usesDatabaseStore(){
+    return process.env.VERCEL === "1"
+        || [
+            "DB_HOST",
+            "DB_USER",
+            "DB_PASSWORD",
+            "DB_NAME",
+            "MYSQL_ADDON_HOST",
+            "MYSQL_ADDON_USER",
+            "MYSQL_ADDON_PASSWORD",
+            "MYSQL_ADDON_DB"
+        ].some((key) => Boolean(process.env[key]));
+}
 
 function normalizeRole(value){
     const role = String(value || "").trim().toLowerCase();
@@ -34,7 +49,72 @@ async function readRawUsers(){
     }
 }
 
+async function getDatabasePool(){
+    if (!databaseStorePromise){
+        databaseStorePromise = (async () => {
+            const pool = require("../db/db");
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS prebana_users (
+                    id VARCHAR(36) NOT NULL PRIMARY KEY,
+                    email VARCHAR(254) NOT NULL,
+                    role VARCHAR(16) NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    created_at DATETIME NOT NULL,
+                    UNIQUE KEY uq_prebana_users_email (email)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `);
+
+            const entries = await readRawUsers();
+            for (const entry of entries){
+                const email = normalizeEmail(entry.email || entry.Email);
+                const role = normalizeRole(entry.role || entry.Role);
+                let passwordHash = entry.passwordHash;
+                const legacyPassword = entry.Password || entry.password;
+
+                if (!passwordHash && typeof legacyPassword === "string"){
+                    passwordHash = await bcrypt.hash(legacyPassword, bcryptRounds);
+                }
+                if (!email || !isValidEmail(email) || !role || !passwordHash){
+                    continue;
+                }
+
+                const createdAt = new Date(entry.createdAt || Date.now());
+                await pool.execute(
+                    `INSERT INTO prebana_users (id, email, role, password_hash, created_at)
+                     VALUES (?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE id = id`,
+                    [
+                        String(entry.id || crypto.randomUUID()),
+                        email,
+                        role,
+                        passwordHash,
+                        Number.isNaN(createdAt.getTime()) ? new Date() : createdAt
+                    ]
+                );
+            }
+            return pool;
+        })().catch((error) => {
+            databaseStorePromise = null;
+            throw error;
+        });
+    }
+    return databaseStorePromise;
+}
+
 async function readUsers(){
+    if (usesDatabaseStore()){
+        const pool = await getDatabasePool();
+        const [users] = await pool.execute(
+            "SELECT id, email, role, password_hash AS passwordHash FROM prebana_users"
+        );
+        return users.map((user) => ({
+            id: user.id,
+            email: normalizeEmail(user.email),
+            role: normalizeRole(user.role),
+            passwordHash: user.passwordHash
+        })).filter((user) => user.id && user.email && user.role && user.passwordHash);
+    }
+
     const entries = await readRawUsers();
     return entries.map((entry) => ({
         id: entry.id,
@@ -42,6 +122,23 @@ async function readUsers(){
         role: normalizeRole(entry.role || entry.Role),
         passwordHash: entry.passwordHash
     })).filter((user) => user.id && user.email && user.role && user.passwordHash);
+}
+
+async function createDatabaseUser(user){
+    const pool = await getDatabasePool();
+    try{
+        await pool.execute(
+            `INSERT INTO prebana_users (id, email, role, password_hash, created_at)
+             VALUES (?, ?, ?, ?, ?)`,
+            [user.id, user.email, user.role, user.passwordHash, new Date(user.createdAt)]
+        );
+        return { user };
+    } catch(error){
+        if (error.code === "ER_DUP_ENTRY"){
+            return { duplicate: true, skipWrite: true };
+        }
+        throw error;
+    }
 }
 
 async function writeUsers(users){
@@ -65,6 +162,11 @@ function updateUsers(change){
 }
 
 async function initializeUserStore(){
+    if (usesDatabaseStore()){
+        await getDatabasePool();
+        return;
+    }
+
     const originalEntries = await readRawUsers();
     const users = [];
     for (const entry of originalEntries){
@@ -139,20 +241,22 @@ async function signup(req, res, role){
     }
 
     const passwordHash = await bcrypt.hash(password, bcryptRounds);
-    const result = await updateUsers((users) => {
-        if (users.some((user) => user.email === email)){
-            return { duplicate: true, skipWrite: true };
-        }
-        const user = {
-            id: crypto.randomUUID(),
-            email,
-            role,
-            passwordHash,
-            createdAt: new Date().toISOString()
-        };
-        users.push(user);
-        return { user };
-    });
+    const user = {
+        id: crypto.randomUUID(),
+        email,
+        role,
+        passwordHash,
+        createdAt: new Date().toISOString()
+    };
+    const result = usesDatabaseStore()
+        ? await createDatabaseUser(user)
+        : await updateUsers((users) => {
+            if (users.some((entry) => entry.email === email)){
+                return { duplicate: true, skipWrite: true };
+            }
+            users.push(user);
+            return { user };
+        });
 
     if (result.duplicate){
         return renderPage("An account with that email already exists.", 409);
