@@ -8,7 +8,7 @@ Vercel deployments use MySQL for account and product storage; local development 
 - Clever Cloud: `MYSQL_ADDON_HOST`, `MYSQL_ADDON_PORT`, `MYSQL_ADDON_USER`, `MYSQL_ADDON_PASSWORD`, `MYSQL_ADDON_DB`, or `MYSQL_ADDON_URI`
 - `DB_SSL=true` if required by the MySQL provider
 
-The application creates the `prebana_users` and `prebana_products` tables on first use and imports existing records from the bundled JSON files when the corresponding MySQL table is empty. The MySQL user must have permission to create tables and modify rows. Product images uploaded on Vercel are stored in Vercel Blob; create a Blob store and set its `BLOB_READ_WRITE_TOKEN` in Vercel project settings. Redeploy after setting the variables. Do not commit credentials or paste them into source files.
+The application creates the `prebana_users` and `prebana_products` tables on first use and imports existing records from the bundled JSON files when the corresponding MySQL table is empty. The MySQL user must have permission to create tables and modify rows. Product images are stored in the public Vercel Blob store `my-blob-store`, connected to the `pre-bana-cosmetics` Vercel project for production, preview, and development. Vercel Blob uses OIDC for the project connection, so a long-lived `BLOB_READ_WRITE_TOKEN` is not required. For local Vercel development, link the project and run `vercel env pull .env.local`; do not commit the resulting credentials.
 
 Set a unique, randomly generated `JWT_SECRET` in Vercel as well; the placeholder in `.env.example` is not suitable for production.
 
@@ -22,7 +22,7 @@ The GitHub Actions workflow in `.github/workflows/ci.yml` runs on pull requests 
 
 After validation succeeds on a push to `main`, the workflow triggers the Vercel Deploy Hook. Add its URL as the `VERCEL_DEPLOY_HOOK_URL` repository secret in GitHub under **Settings → Secrets and variables → Actions**. The workflow never stores the URL in the repository. Configure the hook for the production branch (`main`). Pull requests run validation but do not trigger this hook. If Vercel's automatic Git deployment also deploys pushes to `main`, disable one of the production deployment triggers to avoid duplicate builds.
 
-For Vercel preview and production deployments, import this GitHub repository into Vercel (or connect it in the Vercel project's **Settings → Git**) and set `main` as the production branch. Vercel then creates preview deployments for pull requests and production deployments for pushes to `main`. Configure the database, Blob, and `JWT_SECRET` environment variables in the Vercel project for the appropriate deployment environments. The GitHub Actions check does not itself deploy to Vercel; require the `CI / validate` status check in GitHub branch protection if merges must wait for validation.
+For Vercel preview and production deployments, import this GitHub repository into Vercel (or connect it in the Vercel project's **Settings → Git**) and set `main` as the production branch. Vercel then creates preview deployments for pull requests and production deployments for pushes to `main`. Configure the database and `JWT_SECRET` environment variables in the Vercel project for the appropriate deployment environments; the Blob connection supplies its own environment variables. The GitHub Actions check does not itself deploy to Vercel; require the `CI / validate` status check in GitHub branch protection if merges must wait for validation.
 
 ## Local M-Pesa callback testing
 
