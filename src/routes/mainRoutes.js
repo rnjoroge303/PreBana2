@@ -133,7 +133,27 @@ router.get('/admin/orders/:id/receipt', requireRole('admin'), async (req, res, n
         if (!order) {
             return res.status(404).send('Order not found.');
         }
-        return res.type('html').send(checkoutController.buildReceiptHtml(order));
+        return res.type('html').send(receiptController.buildThermalReceiptHtml(order, {
+            pdfUrl: `/pre/admin/orders/${encodeURIComponent(order.id)}/receipt.pdf`,
+            backUrl: '/pre/admin#accounts',
+            backLabel: 'Back to customers'
+        }));
+    } catch (error) {
+        return next(error);
+    }
+});
+router.get('/admin/orders/:id/receipt.pdf', requireRole('admin'), async (req, res, next) => {
+    try {
+        const order = await checkoutController.getOrderById(req.params.id);
+        if (!order) {
+            return res.status(404).send('Order not found.');
+        }
+        const pdf = await receiptController.buildThermalReceiptPdf(order);
+        const safeOrderId = String(order.id).replace(/[^a-zA-Z0-9_-]/g, '');
+        return res
+            .type('application/pdf')
+            .attachment(`PreBana-receipt-${safeOrderId}.pdf`)
+            .send(pdf);
     } catch (error) {
         return next(error);
     }

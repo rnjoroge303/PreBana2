@@ -13,72 +13,6 @@ function escapeHtml(value) {
         .replace(/'/g, "&#39;");
 }
 
-function formatCurrency(value) {
-    return `KSh ${Number(value || 0).toLocaleString("en-KE")}`;
-}
-
-function formatDate(value) {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        return "—";
-    }
-    return date.toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" });
-}
-
-function buildReceiptHtml(order) {
-    const items = Array.isArray(order.items) ? order.items : [];
-    const rows = items.map((item) => `
-        <tr>
-            <td>${escapeHtml(item.name || "Product")}</td>
-            <td>${Number(item.quantity || 0)}</td>
-            <td>${formatCurrency(item.unitPrice || 0)}</td>
-            <td>${formatCurrency(item.lineTotal || 0)}</td>
-        </tr>`).join("");
-
-    return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>PreBana Receipt - ${escapeHtml(order.id)}</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 32px; color: #172533; }
-    .brand { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
-    .subtitle { color: #5f6b78; margin-bottom: 26px; }
-    .meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0 24px; }
-    .meta div { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
-    th, td { border-bottom: 1px solid #e5e7eb; padding: 10px 8px; text-align: left; }
-    th { background: #f8fafc; }
-    .total { text-align: right; font-weight: 700; font-size: 18px; margin-top: 16px; }
-    @media print { body { margin: 0; } }
-  </style>
-</head>
-<body>
-  <div class="brand">PreBana Cosmetics</div>
-  <div class="subtitle">Customer receipt</div>
-  <div class="meta">
-    <div><strong>Order ID:</strong><br>${escapeHtml(order.id)}</div>
-    <div><strong>Ordered:</strong><br>${escapeHtml(formatDate(order.createdAt))}</div>
-    <div><strong>Customer:</strong><br>${escapeHtml(order.customer?.name || "N/A")}</div>
-    <div><strong>Phone:</strong><br>${escapeHtml(order.customer?.phone || "N/A")}</div>
-  </div>
-  <div><strong>Delivery address:</strong><br>${escapeHtml(order.customer?.address || "N/A")}</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Qty</th>
-        <th>Unit</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody>${rows || '<tr><td colspan="4">No items listed.</td></tr>'}</tbody>
-  </table>
-  <div class="total">Total: ${formatCurrency(order.total || 0)}</div>
-</body>
-</html>`;
-}
-
 function buildShippingLabelHtml(order) {
     return `<!doctype html>
 <html lang="en">
@@ -431,7 +365,6 @@ module.exports = {
     applyMpesaCallback,
     deleteOrder,
     deleteCustomerOrder,
-    buildReceiptHtml,
     buildShippingLabelHtml,
     showCheckout
 };

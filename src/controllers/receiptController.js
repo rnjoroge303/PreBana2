@@ -26,14 +26,30 @@ function maskPhone(value) {
     return `${phone.slice(0, 3)}${"*".repeat(phone.length - 6)}${phone.slice(-3)}`;
 }
 
-function buildThermalReceiptHtml(order) {
+function formatPaymentStatus(order) {
+    const labels = {
+        paid: "PAID",
+        pending: "PENDING",
+        awaiting_verification: "CODE SUBMITTED",
+        failed: "FAILED",
+        cancelled: "CANCELLED",
+        review_required: "REVIEW REQUIRED"
+    };
+    return labels[order.paymentStatus]
+        || String(order.paymentStatus || "pending").replace(/_/g, " ").toUpperCase();
+}
+
+function buildThermalReceiptHtml(order, options = {}) {
     const items = Array.isArray(order.items) ? order.items : [];
     const rows = items.map((item) => `
         <tr>
             <td>${escapeHtml(item.name || "Product")} × ${Number(item.quantity || 0)}</td>
             <td>${formatCurrency(item.lineTotal || 0)}</td>
         </tr>`).join("");
-    const pdfUrl = `/pre/orders/${encodeURIComponent(order.id)}/receipt.pdf`;
+    const pdfUrl = options.pdfUrl || `/pre/orders/${encodeURIComponent(order.id)}/receipt.pdf`;
+    const backUrl = options.backUrl || "/pre/store";
+    const backLabel = options.backLabel || "Back to shop";
+    const totalLabel = order.paymentStatus === "paid" ? "Total paid" : "Order total";
 
     return `<!doctype html>
 <html lang="en">
@@ -71,7 +87,7 @@ function buildThermalReceiptHtml(order) {
     <p class="subtitle">Customer receipt</p>
     <div class="line"><span>Order</span><strong>${escapeHtml(order.id)}</strong></div>
     <div class="line"><span>Date</span><span>${escapeHtml(formatDate(order.createdAt))}</span></div>
-    <div class="line"><span>Status</span><strong>Paid</strong></div>
+    <div class="line"><span>Status</span><strong>${escapeHtml(formatPaymentStatus(order))}</strong></div>
     <div class="line"><span>M-Pesa code</span><strong>${escapeHtml(order.mpesa?.receipt || order.paymentReference || "—")}</strong></div>
     <p class="section">Paid by</p>
     <div class="line"><span>Name</span><span>${escapeHtml(order.customer?.name || "—")}</span></div>
@@ -82,12 +98,12 @@ function buildThermalReceiptHtml(order) {
     <div class="line"><span>Location</span><span>${escapeHtml(order.customer?.address || "—")}</span></div>
     <p class="section">Items</p>
     <table><tbody>${rows || "<tr><td>No items listed</td><td></td></tr>"}</tbody></table>
-    <div class="total">Total paid: ${formatCurrency(order.total)}</div>
+    <div class="total">${totalLabel}: ${formatCurrency(order.total)}</div>
   </main>
   <nav class="actions" aria-label="Receipt actions">
     <button type="button" onclick="window.print()">Print receipt</button>
-    <a href="${pdfUrl}">Download PDF</a>
-    <a href="/pre/store">Back to shop</a>
+    <a href="${escapeHtml(pdfUrl)}">Download PDF</a>
+    <a href="${escapeHtml(backUrl)}">${escapeHtml(backLabel)}</a>
   </nav>
 </body>
 </html>`;
@@ -146,7 +162,7 @@ function buildThermalReceiptPdf(order) {
     addLine("CUSTOMER RECEIPT", { bold: true, size: 10, gap: 5 });
     addLine(`Order: ${order.id}`);
     addLine(`Date: ${formatDate(order.createdAt)}`);
-    addLine("Status: PAID");
+    addLine(`Status: ${formatPaymentStatus(order)}`);
     addLine(`M-Pesa code: ${receiptCode}`);
     addLine("--------------------------------------");
     addLine("PAID BY", { bold: true, size: 9, gap: 2 });
@@ -164,7 +180,8 @@ function buildThermalReceiptPdf(order) {
         addLine(formatCurrency(item.lineTotal || 0), { gap: 5 });
     });
     addLine("--------------------------------------");
-    addLine(`TOTAL PAID: ${formatCurrency(order.total)}`, { bold: true, size: 11, gap: 2 });
+    const totalLabel = order.paymentStatus === "paid" ? "TOTAL PAID" : "ORDER TOTAL";
+    addLine(`${totalLabel}: ${formatCurrency(order.total)}`, { bold: true, size: 11, gap: 2 });
 
     const width = 226.77;
     const height = Math.max(250, 24 + lines.reduce((sum, line) => sum + line.size + line.gap + 2, 0));
