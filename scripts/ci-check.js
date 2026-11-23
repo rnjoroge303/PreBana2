@@ -53,5 +53,5 @@ if (failures > 0) {
   console.error(`Validation failed with ${failures} error(s).`);
   process.exitCode = 1;
 } else {
-  console.log(`Validated ${javascriptFiles} JavaScript files and ${ejsFiles} EJS templates.`);
+  process.stdout.write(`Validated ${javascriptFiles} JavaScript files and ${ejsFiles} EJS templates.\n`);
 }

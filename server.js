@@ -29,11 +29,7 @@ app.use((req, res) => res.status(404).render('404.ejs'));
 if (require.main === module) {
   authController.initializeUserStore()
     .then(() => {
-      app.listen(port, () => {
-        console.log(`Server running on localhost:${port}`);
-        console.log('M-Pesa callback URL configured:', process.env.MPESA_CALLBACK_URL || '[missing]');
-        console.log('M-Pesa callback route listening at:', `http://localhost:${port}/api/mpesa/callback`);
-      });
+      app.listen(port);
     })
     .catch((error) => {
       console.error('Unable to initialize user store:', error.message);

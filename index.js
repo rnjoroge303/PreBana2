@@ -34,9 +34,7 @@ app.use((req,res)=>{
 
 authController.initializeUserStore()
     .then(() => {
-        app.listen(port, () => {
-            console.log(`Server running on localhost:${port}`)
-        })
+        app.listen(port)
     })
     .catch((error) => {
         console.error('Unable to initialize user store:', error.message)

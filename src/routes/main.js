@@ -53,17 +53,6 @@ router.post('/api/payments', async (req, res) => {
 
     await setPaymentStkDetails(result.insertId, stkResponse);
 
-    console.log('[Safaricom accepted STK Push request]', {
-      paymentId: result.insertId,
-      orderId: req.body.orderId,
-      phoneNumber: req.body.phoneNumber,
-      amount: req.body.amount,
-      checkoutRequestId: stkResponse.CheckoutRequestID,
-      merchantRequestId: stkResponse.MerchantRequestID,
-      responseCode: stkResponse.ResponseCode,
-      responseDescription: stkResponse.ResponseDescription
-    });
-
     res.status(201).json({
       message: 'STK Push request accepted by Safaricom',
       paymentId: result.insertId,
@@ -79,8 +68,6 @@ router.post('/api/payments', async (req, res) => {
 
 router.post('/api/mpesa/callback', async (req, res) => {
   try {
-    console.log(`[Safaricom callback ${new Date().toISOString()}]`, JSON.stringify(req.body));
-
     const callback = req.body?.Body?.stkCallback;
     if (!callback) {
       console.warn('[Safaricom callback] Missing stkCallback payload');
@@ -102,14 +89,6 @@ router.post('/api/mpesa/callback', async (req, res) => {
       receipt: metadata.MpesaReceiptNumber
     });
 
-    console.log('[Database payment update]', {
-      checkoutRequestId: callback.CheckoutRequestID,
-      status,
-      resultCode: callback.ResultCode,
-      resultDescription: callback.ResultDesc,
-      mpesaReceipt: metadata.MpesaReceiptNumber || null
-    });
-
     res.json({ ResultCode: 0, ResultDesc: 'Accepted' });
   } catch (error) {
     console.error('M-Pesa callback error:', error);
@@ -121,14 +100,6 @@ router.get('/api/mpesa/status/:checkoutRequestId', async (req, res) => {
   try {
     const payment = await getPaymentByCheckoutRequest(req.params.checkoutRequestId);
     if (!payment) return res.status(404).json({ error: 'Payment not found' });
-
-    console.log('[Payment status check]', {
-      checkoutRequestId: req.params.checkoutRequestId,
-      status: payment.status,
-      resultCode: payment.result_code,
-      resultDescription: payment.result_description,
-      mpesaReceipt: payment.mpesa_receipt
-    });
 
     res.json({
       status: payment.status,
