@@ -143,10 +143,20 @@ async function submitMpesaConfirmation(orderId, userId, paymentReference) {
         if (entry.paymentStatus === "paid") {
             throw new Error("This order is already marked as paid.");
         }
-        entry.paymentStatus = "awaiting_verification";
-        entry.paymentMethod = "M-Pesa manual confirmation";
-        entry.paymentReference = reference;
-        entry.confirmationSubmittedAt = new Date().toISOString();
+        const savedReceipt = String(entry.mpesa?.receipt || "").trim().toUpperCase();
+        if (!savedReceipt || savedReceipt !== reference || entry.paymentResultCode !== 0) {
+            throw new Error("We have not received a matching M-Pesa receipt yet. Check the code and try again after Safaricom sends the payment confirmation.");
+        }
+        const receivedAmount = Number(entry.mpesa?.amount);
+        if (!Number.isFinite(receivedAmount) || Math.round(receivedAmount) !== Math.round(Number(entry.total))) {
+            throw new Error("The M-Pesa receipt amount does not match this order. Please contact the store.");
+        }
+
+        entry.paymentStatus = "paid";
+        entry.paymentMethod = "M-Pesa STK Push";
+        entry.paymentReference = savedReceipt;
+        entry.status = "processing";
+        entry.paymentConfirmedAt = new Date().toISOString();
         return entry;
     });
     if (!order) {

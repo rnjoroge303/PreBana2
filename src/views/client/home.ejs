@@ -419,14 +419,14 @@
                 const submit = document.createElement("button");
                 const error = document.createElement("p");
                 form.className = "orderPaymentForm";
-                label.textContent = "Submit M-Pesa transaction code";
+                label.textContent = "Check your M-Pesa transaction code";
                 input.name = "paymentReference";
                 input.required = true;
                 input.maxLength = 20;
                 input.autocomplete = "off";
                 input.placeholder = "e.g. QGH7X2ABC1";
                 submit.type = "submit";
-                submit.textContent = "Send for verification";
+                submit.textContent = "Confirm M-Pesa code";
                 error.className = "orderPaymentError";
                 error.hidden = true;
                 form.append(label, input, submit, error);
@@ -450,7 +450,7 @@
                         error.textContent = requestError.message;
                         error.hidden = false;
                         submit.disabled = false;
-                        submit.textContent = "Send for verification";
+                        submit.textContent = "Confirm M-Pesa code";
                     }
                 });
                 card.append(form);

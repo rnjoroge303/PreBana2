@@ -1,12 +1,27 @@
 {
   "products": [
     {
+      "id": "PB-20261123-732DDB",
+      "name": "admin",
+      "category": "hair",
+      "description": "Dhdydhd",
+      "price": 900,
+      "stock": 19,
+      "images": [
+        {
+          "url": "/uploads/products/e331f432-0286-429d-b0aa-8dc694ba6ed2.jpg",
+          "alt": "admin"
+        }
+      ],
+      "createdAt": "2026-11-23T12:52:39.090Z"
+    },
+    {
       "id": "PB-20261120-9AD78E",
       "name": "lotion",
       "category": "body",
       "description": "body care",
       "price": 10,
-      "stock": 10,
+      "stock": 7,
       "images": [
         {
           "url": "/uploads/products/2f241c79-cc7e-4927-a171-56203cd04919.jpg",
@@ -21,7 +36,7 @@
       "category": "body",
       "description": "body oil",
       "price": 400,
-      "stock": 99,
+      "stock": 98,
       "images": [],
       "createdAt": "2026-10-22T06:58:02.009Z",
       "updatedAt": "2026-10-22T07:11:29.662Z"
@@ -32,7 +47,7 @@
       "category": "featured",
       "description": "hand sanitizer",
       "price": 50,
-      "stock": 5,
+      "stock": 2,
       "images": [
         {
           "url": "/uploads/products/f117411f-8857-4270-b67a-de9be1834685.png",

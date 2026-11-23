@@ -43,7 +43,12 @@ router.post('/orders/:id/mpesa-confirmation', requireRole('client'), async (req,
         if (error.message === 'Order not found.') {
             return res.status(404).json({ error: 'Order not found.' });
         }
-        if (error.message === 'This order is already marked as paid.' || error.message.startsWith('Enter a valid M-Pesa')) {
+        if (
+            error.message === 'This order is already marked as paid.'
+            || error.message.startsWith('Enter a valid M-Pesa')
+            || error.message.startsWith('We have not received a matching M-Pesa receipt')
+            || error.message.startsWith('The M-Pesa receipt amount')
+        ) {
             return res.status(400).json({ error: error.message });
         }
         return next(error);

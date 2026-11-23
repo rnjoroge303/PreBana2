@@ -105,18 +105,18 @@
                 <button class="placeOrderButton" id="retryMpesaButton" type="button" hidden>Send M-Pesa prompt again
                     <span aria-hidden="true">→</span></button>
                 <details class="manualPaymentFallback">
-                    <summary>Already paid another way? Submit your M-Pesa code</summary>
+                    <summary>Paid but not confirmed yet? Check your M-Pesa code</summary>
                     <form id="mpesaConfirmationForm" class="mpesaConfirmationForm">
                         <label for="mpesaReference">M-Pesa transaction code</label>
                         <input id="mpesaReference" name="paymentReference" maxlength="20" autocomplete="off" required
                             placeholder="e.g. QGH7X2ABC1">
                         <p class="checkoutError" id="mpesaError" role="alert" hidden></p>
-                        <button class="placeOrderButton" id="confirmMpesaButton" type="submit">Submit code for admin
-                            verification <span aria-hidden="true">→</span></button>
+                        <button class="placeOrderButton" id="confirmMpesaButton" type="submit">Confirm M-Pesa code
+                            <span aria-hidden="true">→</span></button>
                     </form>
                 </details>
-                <p class="paymentNote">STK payments update automatically after Safaricom confirms them. Codes submitted
-                    manually require admin verification.</p>
+                <p class="paymentNote">Your code is only confirmed when it matches the receipt Safaricom sent to our
+                    records and the payment amount matches your order.</p>
                 <a class="checkoutModalLater" href="/pre/store#orders">I'll do this later</a>
             </div>
         </section>
@@ -292,9 +292,10 @@
 
         async function pollPaymentStatus(attempt) {
             if (attempt >= 60) {
-                mpesaModalMessage.textContent = "We have not received a payment result yet. You can wait, check your phone, or send the prompt again.";
+                mpesaModalMessage.textContent = "We have not received Safaricom's confirmation yet. If your M-Pesa message says the payment was completed, enter its code below; we will confirm it only after it matches the receipt and amount received by our system.";
                 retryMpesaButton.hidden = false;
                 retryMpesaButton.disabled = false;
+                mpesaConfirmationForm.closest("details").open = true;
                 return;
             }
             await new Promise((resolve) => window.setTimeout(resolve, 2500));
@@ -313,9 +314,10 @@
                     return;
                 }
                 if (["failed", "cancelled", "review_required"].includes(result.paymentStatus)) {
-                    mpesaModalMessage.textContent = result.paymentResultDescription || "M-Pesa did not confirm this payment. You can retry the prompt or submit a code for admin verification.";
+                    mpesaModalMessage.textContent = result.paymentResultDescription || "Automatic confirmation did not complete. Enter the M-Pesa code from your receipt; we will only confirm it if it matches the receipt received from Safaricom.";
                     retryMpesaButton.hidden = false;
                     retryMpesaButton.disabled = false;
+                    mpesaConfirmationForm.closest("details").open = true;
                     return;
                 }
                 pollPaymentStatus(attempt + 1);
@@ -332,7 +334,7 @@
             event.preventDefault();
             mpesaError.hidden = true;
             confirmMpesaButton.disabled = true;
-            confirmMpesaButton.textContent = "Submitting confirmation...";
+            confirmMpesaButton.textContent = "Checking code...";
             try {
                 const response = await fetch(`/pre/orders/${encodeURIComponent(currentOrderId)}/mpesa-confirmation`, {
                     method: "POST",
@@ -345,7 +347,7 @@
                 }
                 mpesaModal.hidden = true;
                 orderReceivedModal.hidden = false;
-                document.getElementById("orderReceivedMessage").textContent = "Your M-Pesa code was submitted and is waiting for admin verification.";
+                document.getElementById("orderReceivedMessage").textContent = `Payment confirmed. M-Pesa receipt: ${result.order.paymentReference}.`;
                 window.setTimeout(() => {
                     window.location.href = "/pre/store#orders";
                 }, 2500);
@@ -353,7 +355,7 @@
                 mpesaError.textContent = error.message;
                 mpesaError.hidden = false;
                 confirmMpesaButton.disabled = false;
-                confirmMpesaButton.innerHTML = 'Submit payment confirmation <span aria-hidden="true">→</span>';
+                confirmMpesaButton.innerHTML = 'Confirm M-Pesa code <span aria-hidden="true">→</span>';
             }
         });
 
