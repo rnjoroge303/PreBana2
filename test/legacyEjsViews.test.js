@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs/promises");
 const path = require("node:path");
 const test = require("node:test");
 const ejs = require("ejs");
@@ -11,6 +12,16 @@ test("payment EJS view renders its page title", async () => {
     });
 
     assert.match(html, /<title>Payment<\/title>/);
+});
+
+test("admin product image paths bypass browser URL validation", async () => {
+    const formHtml = await ejs.renderFile(path.join(viewsDirectory, "admin", "includes", "product.ejs"), {
+        productId: "PB-TEST-1"
+    });
+    const dashboardScript = await fs.readFile(path.join(viewsDirectory, "admin", "dashboard.ejs"), "utf8");
+
+    assert.match(formHtml, /id="adminProductForm"[^>]*novalidate/);
+    assert.match(dashboardScript, /input\.type = "text";\s*input\.inputMode = "url";/);
 });
 
 test("storefront offers public browsing and shows account actions based on sign-in state", async () => {
