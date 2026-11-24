@@ -230,13 +230,11 @@
 			input.value = value;
 			label.append(input);
 			row.append(label);
-			if (rowNumber > 1){
-				removeButton.className = "removeImageUrl";
-				removeButton.type = "button";
-				removeButton.setAttribute("aria-label", `Remove image URL ${rowNumber}`);
-				removeButton.textContent = "×";
-				row.append(removeButton);
-			}
+			removeButton.className = "removeImageUrl";
+			removeButton.type = "button";
+			removeButton.setAttribute("aria-label", `Remove image URL ${rowNumber}`);
+			removeButton.textContent = "×";
+			row.append(removeButton);
 			imageUrlList.append(row);
 		}
 
@@ -250,9 +248,7 @@
 				label.htmlFor = `imageUrl${rowNumber}`;
 				label.firstChild.nodeValue = `Image URL ${rowNumber}`;
 				input.id = `imageUrl${rowNumber}`;
-				if (rowNumber === 1 && removeButton){
-					removeButton.remove();
-				} else if (rowNumber > 1 && !removeButton){
+				if (!removeButton){
 					removeButton = document.createElement("button");
 					removeButton.className = "removeImageUrl";
 					removeButton.type = "button";
