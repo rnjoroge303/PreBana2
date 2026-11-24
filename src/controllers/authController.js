@@ -276,33 +276,41 @@ function landingForRole(role){
     return role === "admin" ? "/pre/admin" : "/pre/store";
 }
 
-function renderLogin(role, res, error = null, status = 200){
-    return res.status(status).render(`${role}/login`, { error });
+function getPostAuthPath(role, requestedPath){
+    return role === "client" && requestedPath === "/pre/checkout"
+        ? requestedPath
+        : landingForRole(role);
 }
 
-function renderSignup(role, res, error = null, status = 200){
-    return res.status(status).render(`${role}/signup`, { error });
+function renderLogin(role, res, error = null, status = 200, next = null){
+    return res.status(status).render(`${role}/login`, { error, next });
+}
+
+function renderSignup(role, res, error = null, status = 200, next = null){
+    return res.status(status).render(`${role}/signup`, { error, next });
 }
 
 async function login(req, res, role){
     const email = normalizeEmail(req.body.email);
     const password = String(req.body.password || "");
+    const next = getPostAuthPath(role, req.body.next);
     const users = await readUsers();
     const user = users.find((entry) => entry.email === email && entry.role === role);
 
     if (!user || !await bcrypt.compare(password, user.passwordHash)){
-        return renderLogin(role, res, "Email or password is incorrect.", 401);
+        return renderLogin(role, res, "Email or password is incorrect.", 401, next);
     }
 
     issueAuthCookie(res, user);
-    return res.redirect(landingForRole(role));
+    return res.redirect(next);
 }
 
 async function signup(req, res, role){
     const email = normalizeEmail(req.body.email);
     const password = String(req.body.password || "");
     const confirmPassword = String(req.body.confirmPassword || "");
-    const renderPage = (message, status = 400) => renderSignup(role, res, message, status);
+    const next = getPostAuthPath(role, req.body.next);
+    const renderPage = (message, status = 400) => renderSignup(role, res, message, status, next);
 
     if (!isValidEmail(email)){
         return renderPage("Enter a valid email address.");
@@ -340,7 +348,7 @@ async function signup(req, res, role){
     }
 
     issueAuthCookie(res, result.user);
-    return res.redirect(landingForRole(role));
+    return res.redirect(next);
 }
 
 function showAdminLogin(req, res){
@@ -348,7 +356,7 @@ function showAdminLogin(req, res){
 }
 
 function showClientLogin(req, res){
-    return renderLogin("client", res);
+    return renderLogin("client", res, null, 200, getPostAuthPath("client", req.query.next));
 }
 
 function showAdminSignup(req, res){
@@ -356,7 +364,7 @@ function showAdminSignup(req, res){
 }
 
 function showClientSignup(req, res){
-    return renderSignup("client", res);
+    return renderSignup("client", res, null, 200, getPostAuthPath("client", req.query.next));
 }
 
 function loginAdmin(req, res, next){

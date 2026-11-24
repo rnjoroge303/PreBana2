@@ -20,13 +20,14 @@
             <span class="authVisualFoot">PREBANA COSMETICS <span aria-hidden="true">·</span> NAIROBI</span>
         </section>
         <section class="authFormPanel">
-            <a class="authBack" href="/pre/client/login">← Back to sign in</a>
+            <a class="authBack" href="/pre/client/login?next=<%= encodeURIComponent(next || '') %>">← Back to sign in</a>
             <div class="authFormWrap">
                 <p class="authEyebrow">A LITTLE MORE YOU</p>
                 <h2>Create your account.</h2>
                 <p class="authIntro">Save your details and make your next visit feel like yours.</p>
                 <% if (error) { %><p class="authError" role="alert"><%= error %></p><% } %>
                 <form class="authForm" action="/pre/client/signup" method="post">
+                    <input type="hidden" name="next" value="<%= next || '' %>">
                     <label for="email">Email address</label>
                     <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
                     <label for="password">Password</label>
@@ -35,7 +36,7 @@
                     <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="12" required placeholder="Enter your password again">
                     <button class="authSubmit" type="submit">Create account <span aria-hidden="true">→</span></button>
                 </form>
-                <p class="authSwitch">Already have an account? <a href="/pre/client/login">Sign in</a></p>
+                <p class="authSwitch">Already have an account? <a href="/pre/client/login?next=<%= encodeURIComponent(next || '') %>">Sign in</a></p>
             </div>
             <footer class="authFooter">Thoughtful beauty, chosen with care.</footer>
         </section>

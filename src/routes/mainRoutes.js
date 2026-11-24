@@ -109,7 +109,7 @@ router.post('/orders/:id/mpesa-confirmation', requireRole('client'), async (req,
         return next(error);
     }
 });
-router.get('/store', requireRole('client'), productController.showStore);
+router.get('/store', productController.showStore);
 router.get('/admin', requireRole('admin'), adminController.showDashboard);
 router.get('/admin/orders/payment-status', requireRole('admin'), async (req, res, next) => {
     try {

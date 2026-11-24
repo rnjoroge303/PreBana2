@@ -2,6 +2,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const productStore = require("../models/productStore");
+const { verifyRequestUser } = require("../middleware/auth");
 
 const dataDirectory = path.join(__dirname, "..", "data");
 const dataFile = path.join(dataDirectory, "data.json");
@@ -342,7 +343,10 @@ async function validateProductFields(req, uploadedFiles){
 async function showStore(req, res, next){
     try{
         const products = (await readProducts()).filter((product) => Number(product.stock) > 0);
-        res.render("home", { products });
+        res.render("home", {
+            products,
+            isAuthenticated: Boolean(verifyRequestUser(req, "client"))
+        });
     } catch(error){
         next(error);
     }

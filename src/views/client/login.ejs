@@ -27,13 +27,14 @@
                 <p class="authIntro">Sign in to continue to your everyday essentials.</p>
                 <% if (error) { %><p class="authError" role="alert"><%= error %></p><% } %>
                 <form class="authForm" action="/pre/client/login" method="post">
+                    <input type="hidden" name="next" value="<%= next || '' %>">
                     <label for="email">Email address</label>
                     <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
                     <label for="password">Password</label>
                     <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password">
                     <button class="authSubmit" type="submit">Sign in <span aria-hidden="true">→</span></button>
                 </form>
-                <p class="authSwitch">New to PreBana? <a href="/pre/client/signup">Create a customer account</a></p>
+                <p class="authSwitch">New to PreBana? <a href="/pre/client/signup?next=<%= encodeURIComponent(next || '') %>">Create a customer account</a></p>
             </div>
             <footer class="authFooter">Thoughtful beauty, chosen with care.</footer>
         </section>
