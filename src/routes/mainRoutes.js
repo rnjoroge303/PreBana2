@@ -173,6 +173,11 @@ router.post('/admin/orders/:id/payment', requireRole('admin'), async (req, res, 
     try {
         const paymentMethod = String(req.body?.paymentMethod || "Confirmed by admin").trim() || "Confirmed by admin";
         const order = await checkoutController.updateOrderPaymentStatus(req.params.id, 'paid', paymentMethod);
+        if (order.paymentStatus !== 'paid') {
+            return res.status(409).json({
+                error: order.paymentResultDescription || 'Inventory could not be confirmed for this paid order.'
+            });
+        }
         return res.json({ success: true, order });
     } catch (error) {
         if (error.message === 'Order not found.') {

@@ -102,8 +102,8 @@
 		</table>
 	</div>
 </div>
-<p class="storageNote">Safaricom callbacks confirm successful STK payments automatically. Manually submitted codes and
-	amount mismatches require admin review. Deleting an order restores its items to stock.</p>
+<p class="storageNote">Safaricom callbacks confirm successful STK payments automatically. Manually submitted codes,
+	amount mismatches, and unavailable stock require admin review. Deleting an order returns stock only if it was already deducted.</p>
 <script>
 	const receiptButtons = document.querySelectorAll(".print-receipt");
 	const shippingLabelButtons = document.querySelectorAll(".print-label");
@@ -207,7 +207,7 @@
 	deleteOrderButtons.forEach((button) => {
 		button.addEventListener("click", async () => {
 			const orderId = button.dataset.orderId;
-			if (!orderId || !window.confirm(`Delete order ${orderId}? Its items will be returned to stock.`)) {
+			if (!orderId || !window.confirm(`Delete order ${orderId}? Any stock deducted for it will be returned.`)) {
 				return;
 			}
 			button.disabled = true;

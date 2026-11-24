@@ -33,20 +33,27 @@ function generateProductId(products = []){
     return productId;
 }
 
+async function readProductState(){
+    try{
+        const contents = await fs.readFile(dataFile, "utf8");
+        const data = JSON.parse(contents);
+        return {
+            products: Array.isArray(data) ? data : Array.isArray(data.products) ? data.products : [],
+            inventoryOperations: Array.isArray(data.inventoryOperations) ? data.inventoryOperations : []
+        };
+    } catch(error){
+        if (error.code === "ENOENT"){
+            return { products: [], inventoryOperations: [] };
+        }
+        throw error;
+    }
+}
+
 async function readProducts(){
     if (usesVercelStorage()){
         return productStore.readProducts();
     }
-    try{
-        const contents = await fs.readFile(dataFile, "utf8");
-        const data = JSON.parse(contents);
-        return Array.isArray(data) ? data : Array.isArray(data.products) ? data.products : [];
-    } catch(error){
-        if (error.code === "ENOENT"){
-            return [];
-        }
-        throw error;
-    }
+    return (await readProductState()).products;
 }
 
 async function removeUploadedFiles(files){
@@ -149,31 +156,66 @@ async function storeUploadedFiles(files, alt){
     }
 }
 
-async function persistProducts(products){
+async function persistProducts(products, inventoryOperations){
     await fs.mkdir(dataDirectory, { recursive: true });
     const temporaryFile = `${dataFile}.${crypto.randomUUID()}.tmp`;
-    await fs.writeFile(temporaryFile, JSON.stringify({ products }, null, 2), "utf8");
+    await fs.writeFile(temporaryFile, JSON.stringify({ products, inventoryOperations }, null, 2), "utf8");
     await fs.rename(temporaryFile, dataFile);
 }
 
-function queueProductChange(change){
+function getLocalInventoryOperationResult(operations, operation){
+    if (!operation){
+        return null;
+    }
+    const existing = operations.find((entry) => entry.orderId === operation.orderId);
+    if (operation.action === "reserve"){
+        if (existing?.status === "reserved"){
+            return { alreadyApplied: true, skipWrite: true };
+        }
+        if (existing?.status === "restored"){
+            return { error: "Inventory for this order has already been returned.", skipWrite: true };
+        }
+    } else if (operation.action === "restore" && existing?.status !== "reserved"){
+        return { alreadyApplied: true, skipWrite: true };
+    }
+    return null;
+}
+
+function updateLocalInventoryOperation(operations, operation){
+    if (!operation){
+        return;
+    }
+    const existing = operations.find((entry) => entry.orderId === operation.orderId);
+    if (existing){
+        existing.status = operation.action === "restore" ? "restored" : "reserved";
+    } else {
+        operations.push({ orderId: operation.orderId, status: "reserved" });
+    }
+}
+
+function queueProductChange(change, inventoryOperation = null){
     const writeOperation = writeQueue.then(async () => {
         if (usesVercelStorage()){
-            const result = await productStore.changeProducts(change);
+            const result = await productStore.changeProducts(change, inventoryOperation);
             if (result.previousImages){
                 await removeUnreferencedUploads(result.previousImages, result.products);
             }
             return result;
         }
-        const products = await readProducts();
-        const result = change(products);
+        const state = await readProductState();
+        const priorOperation = getLocalInventoryOperationResult(state.inventoryOperations, inventoryOperation);
+        if (priorOperation){
+            return { ...priorOperation, productsCount: state.products.length };
+        }
+        const result = change(state.products);
         if (!result.skipWrite){
-            await persistProducts(products);
+            updateLocalInventoryOperation(state.inventoryOperations, inventoryOperation);
+            await persistProducts(state.products, state.inventoryOperations);
         }
         if (result.previousImages){
-            await removeUnreferencedUploads(result.previousImages, products);
+            await removeUnreferencedUploads(result.previousImages, state.products);
         }
-        return { ...result, productsCount: products.length };
+        return { ...result, productsCount: state.products.length };
     });
 
     writeQueue = writeOperation.catch(() => {});
@@ -226,32 +268,64 @@ async function deleteProductRecord(productId){
     });
 }
 
-async function reserveStock(items){
-    return queueProductChange((products) => {
-        const orderProducts = [];
-        for (const item of items){
-            const product = products.find((entry) => entry.id === item.productId);
-            if (!product){
-                return { error: "A product in your bag is no longer available.", skipWrite: true };
-            }
-            if (item.quantity > product.stock){
-                return { error: `${product.name} has only ${product.stock} available.`, skipWrite: true };
-            }
-            orderProducts.push({ product, quantity: item.quantity });
+function prepareStockItems(products, items){
+    const orderProducts = [];
+    for (const item of items){
+        const product = products.find((entry) => entry.id === item.productId);
+        if (!product){
+            return { error: "A product in your bag is no longer available." };
         }
+        if (item.quantity > product.stock){
+            return { error: `${product.name} has only ${product.stock} available.` };
+        }
+        orderProducts.push({ product, quantity: item.quantity });
+    }
 
-        const itemsForOrder = orderProducts.map(({ product, quantity }) => ({
+    return {
+        orderProducts,
+        itemsForOrder: orderProducts.map(({ product, quantity }) => ({
             productId: product.id,
             name: product.name,
             quantity,
             unitPrice: product.price,
             lineTotal: product.price * quantity
-        }));
-        orderProducts.forEach(({ product, quantity }) => {
+        }))
+    };
+}
+
+async function checkStock(items){
+    return queueProductChange((products) => {
+        const result = prepareStockItems(products, items);
+        return result.error
+            ? { error: result.error, skipWrite: true }
+            : { itemsForOrder: result.itemsForOrder, skipWrite: true };
+    });
+}
+
+async function reserveStock(items){
+    return queueProductChange((products) => {
+        const result = prepareStockItems(products, items);
+        if (result.error){
+            return { error: result.error, skipWrite: true };
+        }
+        result.orderProducts.forEach(({ product, quantity }) => {
             product.stock -= quantity;
         });
-        return { itemsForOrder };
+        return { itemsForOrder: result.itemsForOrder };
     });
+}
+
+async function reserveStockForOrder(orderId, items){
+    return queueProductChange((products) => {
+        const result = prepareStockItems(products, items);
+        if (result.error){
+            return { error: result.error, skipWrite: true };
+        }
+        result.orderProducts.forEach(({ product, quantity }) => {
+            product.stock -= quantity;
+        });
+        return { itemsForOrder: result.itemsForOrder };
+    }, { orderId: String(orderId), action: "reserve" });
 }
 
 async function restoreStock(items){
@@ -264,6 +338,18 @@ async function restoreStock(items){
         });
         return {};
     });
+}
+
+async function restoreStockForOrder(orderId, items){
+    return queueProductChange((products) => {
+        items.forEach((item) => {
+            const product = products.find((entry) => entry.id === item.productId);
+            if (product){
+                product.stock += item.quantity;
+            }
+        });
+        return {};
+    }, { orderId: String(orderId), action: "restore" });
 }
 
 function normalizeImageUrls(value){
@@ -446,11 +532,14 @@ async function deleteProduct(req, res, next){
 
 module.exports = {
     createProduct,
+    checkStock,
     deleteProduct,
     generateProductId,
     readProducts,
+    reserveStockForOrder,
     reserveStock,
     restoreStock,
+    restoreStockForOrder,
     showAdmin,
     showStore,
     updateProduct

@@ -4,6 +4,32 @@ const orderStore = require("../models/orderStore");
 
 const { readOrders } = orderStore;
 
+function getOrderStockItems(order){
+    return (Array.isArray(order.items) ? order.items : [])
+        .map((item) => ({ productId: item.productId, quantity: Number(item.quantity) || 0 }))
+        .filter((item) => item.productId && item.quantity > 0);
+}
+
+async function ensureOrderStockDeducted(order){
+    if (order.inventoryDeducted !== false){
+        return null;
+    }
+
+    const result = await productController.reserveStockForOrder(order.id, getOrderStockItems(order));
+    if (result.error){
+        return result.error;
+    }
+    return null;
+}
+
+async function restoreOrderStock(order){
+    const items = getOrderStockItems(order);
+    if (order.inventoryDeducted === undefined){
+        return productController.restoreStock(items);
+    }
+    return productController.restoreStockForOrder(order.id, items);
+}
+
 function escapeHtml(value) {
     return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -70,46 +96,85 @@ async function submitMpesaConfirmation(orderId, userId, paymentReference) {
         throw new Error("Enter a valid M-Pesa transaction code (6–20 letters or numbers).");
     }
 
+    const snapshot = await getOrderById(orderId);
+    if (!snapshot || snapshot.customer?.userId !== userId) {
+        throw new Error("Order not found.");
+    }
+    if (snapshot.paymentStatus === "paid") {
+        throw new Error("This order is already marked as paid.");
+    }
+    const savedReceipt = String(snapshot.mpesa?.receipt || "").trim().toUpperCase();
+    if (!savedReceipt || savedReceipt !== reference || snapshot.paymentResultCode !== 0) {
+        throw new Error("We have not received a matching M-Pesa receipt yet. Check the code and try again after Safaricom sends the payment confirmation.");
+    }
+    const receivedAmount = Number(snapshot.mpesa?.amount);
+    if (!Number.isFinite(receivedAmount) || Math.round(receivedAmount) !== Math.round(Number(snapshot.total))) {
+        throw new Error("The M-Pesa receipt amount does not match this order. Please contact the store.");
+    }
+
+    const stockError = await ensureOrderStockDeducted(snapshot);
     const order = await orderStore.updateOrder(orderId, (entry) => {
         if (entry.customer?.userId !== userId) {
             return null;
         }
         if (entry.paymentStatus === "paid") {
-            throw new Error("This order is already marked as paid.");
+            return entry;
         }
-        const savedReceipt = String(entry.mpesa?.receipt || "").trim().toUpperCase();
-        if (!savedReceipt || savedReceipt !== reference || entry.paymentResultCode !== 0) {
-            throw new Error("We have not received a matching M-Pesa receipt yet. Check the code and try again after Safaricom sends the payment confirmation.");
+        const currentReceipt = String(entry.mpesa?.receipt || "").trim().toUpperCase();
+        if (currentReceipt !== reference || entry.paymentResultCode !== 0) {
+            return null;
         }
-        const receivedAmount = Number(entry.mpesa?.amount);
-        if (!Number.isFinite(receivedAmount) || Math.round(receivedAmount) !== Math.round(Number(entry.total))) {
-            throw new Error("The M-Pesa receipt amount does not match this order. Please contact the store.");
-        }
-
-        entry.paymentStatus = "paid";
         entry.paymentMethod = "M-Pesa STK Push";
         entry.paymentReference = savedReceipt;
-        entry.status = "processing";
         entry.paymentConfirmedAt = new Date().toISOString();
+        if (stockError){
+            entry.paymentStatus = "review_required";
+            entry.paymentResultDescription = `Payment was confirmed, but inventory needs review: ${stockError}`;
+            return entry;
+        }
+        entry.inventoryDeducted = true;
+        entry.paymentStatus = "paid";
+        entry.status = "processing";
         return entry;
     });
     if (!order) {
-        throw new Error("Order not found.");
+        if (snapshot.inventoryDeducted === false && !stockError) {
+            await productController.restoreStockForOrder(snapshot.id, getOrderStockItems(snapshot));
+        }
+        throw new Error("Order not found or payment details changed.");
     }
     return order;
 }
 
 async function updateOrderPaymentStatus(orderId, paymentStatus = "paid", paymentMethod = "Confirmed by admin") {
+    const snapshot = await getOrderById(orderId);
+    if (!snapshot) {
+        throw new Error("Order not found.");
+    }
+    const stockError = paymentStatus === "paid"
+        ? await ensureOrderStockDeducted(snapshot)
+        : null;
     const order = await orderStore.updateOrder(orderId, (entry) => {
-        entry.paymentStatus = paymentStatus;
         entry.paymentMethod = String(paymentMethod || "Confirmed by admin").trim() || "Confirmed by admin";
         if (paymentStatus === "paid") {
+            if (stockError){
+                entry.paymentStatus = "review_required";
+                entry.paymentResultDescription = `Payment was confirmed, but inventory needs review: ${stockError}`;
+                return entry;
+            }
+            entry.inventoryDeducted = true;
+            entry.paymentStatus = "paid";
             entry.status = "processing";
             entry.paymentConfirmedAt = new Date().toISOString();
+        } else {
+            entry.paymentStatus = paymentStatus;
         }
         return entry;
     });
     if (!order) {
+        if (snapshot.inventoryDeducted === false && !stockError) {
+            await productController.restoreStockForOrder(snapshot.id, getOrderStockItems(snapshot));
+        }
         throw new Error("Order not found.");
     }
     return order;
@@ -117,7 +182,9 @@ async function updateOrderPaymentStatus(orderId, paymentStatus = "paid", payment
 
 async function recordMpesaPush(orderId, userId, phoneNumber, response) {
     const order = await orderStore.updateOrder(orderId, (entry) => {
-        if (entry.customer?.userId !== userId || entry.paymentStatus === "paid") {
+        if (entry.customer?.userId !== userId
+            || entry.paymentStatus === "paid"
+            || (entry.paymentResultCode === 0 && entry.mpesa?.receipt)){
             return null;
         }
         entry.paymentStatus = "pending";
@@ -144,8 +211,8 @@ async function recordMpesaPush(orderId, userId, phoneNumber, response) {
 }
 
 async function applyMpesaCallback(checkoutRequestId, callback) {
-    return orderStore.updateOrderByCheckoutRequest(checkoutRequestId, (order) => {
-        if (order.paymentStatus === "paid") {
+    const snapshot = await orderStore.updateOrderByCheckoutRequest(checkoutRequestId, (order) => {
+        if (order.paymentStatus === "paid" || (order.paymentResultCode === 0 && order.mpesa?.receipt)){
             return order;
         }
 
@@ -159,14 +226,9 @@ async function applyMpesaCallback(checkoutRequestId, callback) {
         const receivedAmount = Number(callback.amount);
         const amountMatches = Number.isFinite(receivedAmount)
             && Math.round(receivedAmount) === Math.round(Number(order.total));
-        let paymentStatus;
-        if (successful) {
-            paymentStatus = receipt && amountMatches ? "paid" : "review_required";
-        } else {
-            paymentStatus = callback.resultCode === 1032 ? "cancelled" : "failed";
-        }
-
-        order.paymentStatus = paymentStatus;
+        order.paymentStatus = successful
+            ? receipt && amountMatches ? "pending" : "review_required"
+            : callback.resultCode === 1032 ? "cancelled" : "failed";
         order.paymentMethod = "M-Pesa STK Push";
         order.paymentResultCode = callback.resultCode;
         order.paymentResultDescription = String(callback.resultDescription || "").slice(0, 255);
@@ -176,13 +238,49 @@ async function applyMpesaCallback(checkoutRequestId, callback) {
             amount: Number.isFinite(receivedAmount) ? receivedAmount : null,
             completedAt: new Date().toISOString()
         };
-        if (paymentStatus === "paid") {
+        if (successful && receipt && amountMatches) {
             order.paymentReference = receipt;
-            order.status = "processing";
-            order.paymentConfirmedAt = new Date().toISOString();
+        } else {
+            delete order.paymentReference;
         }
         return order;
     });
+    if (!snapshot || snapshot.paymentStatus === "paid"){
+        return snapshot;
+    }
+
+    const receipt = String(snapshot.mpesa?.receipt || "").trim();
+    const receivedAmount = Number(snapshot.mpesa?.amount);
+    const amountMatches = Number.isFinite(receivedAmount)
+        && Math.round(receivedAmount) === Math.round(Number(snapshot.total));
+    if (snapshot.paymentResultCode !== 0 || !receipt || !amountMatches){
+        return snapshot;
+    }
+
+    const stockError = await ensureOrderStockDeducted(snapshot);
+    const order = await orderStore.updateOrderByCheckoutRequest(checkoutRequestId, (entry) => {
+        if (entry.paymentStatus === "paid"){
+            return entry;
+        }
+        if (entry.paymentResultCode !== 0 || String(entry.mpesa?.receipt || "").trim() !== receipt){
+            return entry;
+        }
+        entry.paymentReference = receipt;
+        entry.paymentConfirmedAt = new Date().toISOString();
+        if (stockError){
+            entry.paymentStatus = "review_required";
+            entry.paymentResultDescription = `Payment was confirmed, but inventory needs review: ${stockError}`;
+            return entry;
+        }
+        entry.inventoryDeducted = true;
+        entry.paymentStatus = "paid";
+        entry.status = "processing";
+        return entry;
+    });
+    if (!order && snapshot.inventoryDeducted === false && !stockError){
+        await productController.restoreStockForOrder(snapshot.id, getOrderStockItems(snapshot));
+    }
+    return order;
 }
 
 async function removeOrder(orderId, canDelete) {
@@ -191,11 +289,7 @@ async function removeOrder(orderId, canDelete) {
         throw new Error(canDelete ? "Order not found or cannot be deleted." : "Order not found.");
     }
     try {
-        await productController.restoreStock(
-            (Array.isArray(deletedOrder.items) ? deletedOrder.items : [])
-                .map((item) => ({ productId: item.productId, quantity: Number(item.quantity) || 0 }))
-                .filter((item) => item.productId && item.quantity > 0)
-        );
+        await restoreOrderStock(deletedOrder);
     } catch (stockError) {
         try {
             await orderStore.restoreOrder(deletedOrder);
@@ -279,11 +373,11 @@ async function placeOrder(req, res, next) {
             return res.status(400).json({ error: "Your bag is empty or contains invalid quantities." });
         }
 
-        const reservation = await productController.reserveStock(cart);
-        if (reservation.error) {
-            return res.status(409).json({ error: reservation.error });
+        const stockCheck = await productController.checkStock(cart);
+        if (stockCheck.error) {
+            return res.status(409).json({ error: stockCheck.error });
         }
-        const items = reservation.itemsForOrder;
+        const items = stockCheck.itemsForOrder;
 
         const order = {
             id: `PB-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
@@ -301,15 +395,11 @@ async function placeOrder(req, res, next) {
             status: "received",
             paymentStatus: "pending",
             paymentMethod: "pending confirmation",
+            inventoryDeducted: false,
             createdAt: new Date().toISOString()
         };
 
-        try {
-            await orderStore.createOrder(order);
-        } catch (error) {
-            await productController.restoreStock(cart);
-            throw error;
-        }
+        await orderStore.createOrder(order);
         return res.status(201).json({ orderId: order.id, total: order.total });
     } catch (error) {
         console.error("[Checkout] Could not place order:", error);

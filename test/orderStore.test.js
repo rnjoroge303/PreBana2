@@ -89,7 +89,8 @@ test("Vercel order storage persists create, update, and delete operations in MyS
 
         const updatedOrder = await orderStore.updateOrderByCheckoutRequest(
             "ws_CO_TEST",
-            (entry) => {
+            async (entry) => {
+                await Promise.resolve();
                 entry.paymentStatus = "paid";
                 return entry;
             }

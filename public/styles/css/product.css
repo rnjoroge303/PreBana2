@@ -102,6 +102,7 @@
 .productGallery{
     position: absolute;
     inset: 0;
+    touch-action: pan-y;
 }
 .productGalleryImage{
     display: block;

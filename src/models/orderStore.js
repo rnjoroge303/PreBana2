@@ -113,7 +113,7 @@ async function changeDatabaseOrders(change) {
         transactionStarted = true;
         await connection.execute("SELECT id FROM prebana_order_store_lock WHERE id = 1 FOR UPDATE");
         const orders = await readDatabaseOrders(connection);
-        const result = change(orders);
+        const result = await change(orders);
         if (!result.skipWrite) {
             await connection.execute("DELETE FROM prebana_orders");
             await insertDatabaseOrders(connection, orders);
@@ -183,12 +183,12 @@ function createOrder(order) {
 }
 
 function updateOrder(orderId, change) {
-    return changeOrders((orders) => {
+    return changeOrders(async (orders) => {
         const order = orders.find((entry) => entry.id === String(orderId));
         if (!order) {
             return { value: null, skipWrite: true };
         }
-        const updatedOrder = change(order);
+        const updatedOrder = await change(order);
         if (!updatedOrder) {
             return { value: null, skipWrite: true };
         }
@@ -197,14 +197,14 @@ function updateOrder(orderId, change) {
 }
 
 function updateOrderByCheckoutRequest(checkoutRequestId, change) {
-    return changeOrders((orders) => {
+    return changeOrders(async (orders) => {
         const requestId = String(checkoutRequestId);
         const order = orders.find((entry) => entry.mpesa?.checkoutRequestId === requestId
             || entry.mpesa?.checkoutRequestIds?.includes(requestId));
         if (!order) {
             return { value: null, skipWrite: true };
         }
-        return { value: change(order) || order };
+        return { value: await change(order) || order };
     });
 }
 

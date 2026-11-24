@@ -294,6 +294,8 @@
 
 .checkoutItemDetails {
     display: grid;
+    min-width: 0;
+    flex: 1;
     gap: 4px;
 }
 
@@ -305,6 +307,51 @@
 .checkoutItemDetails span {
     color: #82908a;
     font-size: 0.67rem;
+}
+
+.checkoutItemControls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.checkoutQuantityButton {
+    display: grid;
+    width: 25px;
+    height: 25px;
+    place-items: center;
+    border: 1px solid #dfe5df;
+    border-radius: 4px;
+    background: white;
+    color: #203b35;
+    font: inherit;
+    cursor: pointer;
+}
+
+.checkoutQuantityButton:disabled {
+    color: #adb7b1;
+    cursor: not-allowed;
+}
+
+.checkoutQuantity {
+    min-width: 0;
+    flex: 1 1 100px;
+}
+
+.checkoutRemoveButton {
+    padding: 3px 4px;
+    border: 0;
+    background: transparent;
+    color: #a34242;
+    font: inherit;
+    font-size: 0.65rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.checkoutRemoveButton:hover {
+    text-decoration: underline;
 }
 
 .checkoutItem>strong {

@@ -90,6 +90,13 @@ async function initialize(){
             seeded TINYINT NOT NULL DEFAULT 0
         ) ENGINE=InnoDB
     `);
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS prebana_inventory_operations (
+            order_id VARCHAR(64) NOT NULL PRIMARY KEY,
+            status VARCHAR(16) NOT NULL,
+            updated_at DATETIME(3) NOT NULL
+        ) ENGINE=InnoDB
+    `);
     await pool.execute("INSERT IGNORE INTO prebana_product_store_lock (id, seeded) VALUES (1, 0)");
 
     const connection = await pool.getConnection();
@@ -145,7 +152,7 @@ async function writeProducts(connection, products){
     await insertProducts(connection, products);
 }
 
-async function changeProducts(change){
+async function changeProducts(change, inventoryOperation = null){
     await ensureInitialized();
     const connection = await getPool().getConnection();
     let transactionStarted = false;
@@ -154,9 +161,37 @@ async function changeProducts(change){
         transactionStarted = true;
         await connection.execute("SELECT id FROM prebana_product_store_lock WHERE id = 1 FOR UPDATE");
         const products = await readProducts(connection);
-        const result = change(products);
+        let result;
+        if (inventoryOperation){
+            const [operationRows] = await connection.execute(
+                "SELECT status FROM prebana_inventory_operations WHERE order_id = ? FOR UPDATE",
+                [inventoryOperation.orderId]
+            );
+            const status = operationRows[0]?.status;
+            if (inventoryOperation.action === "reserve" && status === "reserved"){
+                result = { alreadyApplied: true, skipWrite: true };
+            } else if (inventoryOperation.action === "reserve" && status === "restored"){
+                result = { error: "Inventory for this order has already been returned.", skipWrite: true };
+            } else if (inventoryOperation.action === "restore" && status !== "reserved"){
+                result = { alreadyApplied: true, skipWrite: true };
+            }
+        }
+        if (!result){
+            result = change(products);
+        }
         if (!result.skipWrite){
             await writeProducts(connection, products);
+            if (inventoryOperation?.action === "reserve"){
+                await connection.execute(
+                    "INSERT INTO prebana_inventory_operations (order_id, status, updated_at) VALUES (?, 'reserved', ?)",
+                    [inventoryOperation.orderId, new Date()]
+                );
+            } else if (inventoryOperation?.action === "restore"){
+                await connection.execute(
+                    "UPDATE prebana_inventory_operations SET status = 'restored', updated_at = ? WHERE order_id = ?",
+                    [new Date(), inventoryOperation.orderId]
+                );
+            }
         }
         await connection.commit();
         transactionStarted = false;

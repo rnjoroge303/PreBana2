@@ -11,8 +11,8 @@ async function initiateOrderPayment(req, res) {
     if (!order || order.customer?.userId !== req.authUser.id) {
         return res.status(404).json({ error: "Order not found." });
     }
-    if (order.paymentStatus === "paid") {
-        return res.status(409).json({ error: "This order has already been paid." });
+    if (order.paymentStatus === "paid" || (order.paymentResultCode === 0 && order.mpesa?.receipt)) {
+        return res.status(409).json({ error: "Payment has already been confirmed for this order." });
     }
 
     try {

@@ -315,15 +315,33 @@
             const image = gallery.querySelector(".productGalleryImage");
             const imageCount = gallery.querySelector(".productImageCount");
             let activeImage = 0;
+            const showImage = (step) => {
+                activeImage = (activeImage + step + images.length) % images.length;
+                image.src = images[activeImage].url;
+                image.alt = images[activeImage].alt || image.alt;
+                imageCount.textContent = `${activeImage + 1} / ${images.length}`;
+            };
 
             gallery.querySelectorAll("[data-gallery-step]").forEach((button) => {
                 button.addEventListener("click", () => {
-                    activeImage = (activeImage + Number(button.dataset.galleryStep) + images.length) % images.length;
-                    image.src = images[activeImage].url;
-                    image.alt = images[activeImage].alt || image.alt;
-                    imageCount.textContent = `${activeImage + 1} / ${images.length}`;
+                    showImage(Number(button.dataset.galleryStep));
                 });
             });
+
+            let touchStartX = null;
+            gallery.addEventListener("touchstart", (event) => {
+                touchStartX = event.touches.length === 1 ? event.touches[0].clientX : null;
+            }, { passive: true });
+            gallery.addEventListener("touchend", (event) => {
+                if (touchStartX === null || !event.changedTouches.length) {
+                    return;
+                }
+                const swipeDistance = event.changedTouches[0].clientX - touchStartX;
+                touchStartX = null;
+                if (Math.abs(swipeDistance) >= 40) {
+                    showImage(swipeDistance < 0 ? 1 : -1);
+                }
+            }, { passive: true });
         });
 
         document.querySelectorAll(".wishlist").forEach((button) => {
