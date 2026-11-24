@@ -139,12 +139,14 @@ test("checkout keeps stock unchanged until payment is confirmed and deducts once
             resultCode: 0,
             resultDescription: "Success",
             receipt: "ABC123",
-            amount: 20
+            amount: 20,
+            payerName: "M-Pesa Payer"
         };
         await checkoutController.applyMpesaCallback("request-paid", successfulCallback);
         assert.equal(products[0].stock, 3);
         assert.equal(order.paymentStatus, "paid");
         assert.equal(order.inventoryDeducted, true);
+        assert.equal(order.mpesa.payerName, "M-Pesa Payer");
 
         await checkoutController.applyMpesaCallback("request-paid", successfulCallback);
         assert.equal(products[0].stock, 3);

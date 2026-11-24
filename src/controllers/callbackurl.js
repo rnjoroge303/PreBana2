@@ -21,6 +21,17 @@ function maskPhone(value) {
     return digits.length > 4 ? `${digits.slice(0, 3)}******${digits.slice(-2)}` : value ?? null;
 }
 
+function getPayerName(metadata) {
+    const explicitName = [metadata.PayerName, metadata.CustomerName, metadata.Name]
+        .find((value) => typeof value === 'string' && value.trim());
+    const name = explicitName || [
+        metadata.FirstName,
+        metadata.MiddleName,
+        metadata.LastName
+    ].filter((value) => typeof value === 'string' && value.trim()).join(' ');
+    return typeof name === 'string' ? name.trim().slice(0, 100) || null : null;
+}
+
 async function handleMpesaCallback(req, res) {
     console.info('[M-Pesa callback] HTTP request received', {
         method: req.method,
@@ -71,7 +82,8 @@ async function handleMpesaCallback(req, res) {
             resultCode,
             resultDescription: String(callback.ResultDesc || '').slice(0, 255),
             receipt,
-            amount: metadata.Amount
+            amount: metadata.Amount,
+            payerName: getPayerName(metadata)
         });
         if (!order) {
             console.error('[M-Pesa callback] No order matches checkout request; check whether this app instance stored the STK request', {
@@ -92,4 +104,4 @@ async function handleMpesaCallback(req, res) {
     }
 }
 
-module.exports = { handleMpesaCallback };
+module.exports = { getPayerName, handleMpesaCallback };

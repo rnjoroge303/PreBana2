@@ -49,6 +49,9 @@ function buildThermalReceiptHtml(order, options = {}) {
     const pdfUrl = options.pdfUrl || `/pre/orders/${encodeURIComponent(order.id)}/receipt.pdf`;
     const backUrl = options.backUrl || "/pre/store";
     const backLabel = options.backLabel || "Back to shop";
+    const customerUrl = options.customerUrl;
+    const customerLabel = options.customerLabel || "Customer page";
+    const receiptTitle = options.receiptTitle || "Customer receipt";
     const totalLabel = order.paymentStatus === "paid" ? "Total paid" : "Order total";
 
     return `<!doctype html>
@@ -65,9 +68,11 @@ function buildThermalReceiptHtml(order, options = {}) {
     h1 { margin: 0; font-size: 20px; text-align: center; }
     .subtitle { margin: 5px 0 16px; color: #5f6b78; text-align: center; }
     .line { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px dashed #bbb; }
+    .line > span:last-child, .line > strong:last-child { min-width: 0; overflow-wrap: anywhere; text-align: right; }
     .section { margin-top: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
     table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 12px; }
     td { padding: 5px 0; vertical-align: top; }
+    td:first-child { overflow-wrap: anywhere; }
     td:last-child { text-align: right; white-space: nowrap; }
     .total { margin-top: 12px; border-top: 1px solid #222; padding-top: 8px; font-size: 16px; font-weight: bold; text-align: right; }
     .actions { display: flex; justify-content: center; gap: 8px; margin: 14px auto; }
@@ -84,13 +89,13 @@ function buildThermalReceiptHtml(order, options = {}) {
 <body>
   <main class="receipt">
     <a class="brand-link" href="/pre/store"><h1>PreBana Cosmetics</h1></a>
-    <p class="subtitle">Customer receipt</p>
+    <p class="subtitle">${escapeHtml(receiptTitle)}</p>
     <div class="line"><span>Order</span><strong>${escapeHtml(order.id)}</strong></div>
     <div class="line"><span>Date</span><span>${escapeHtml(formatDate(order.createdAt))}</span></div>
     <div class="line"><span>Status</span><strong>${escapeHtml(formatPaymentStatus(order))}</strong></div>
     <div class="line"><span>M-Pesa code</span><strong>${escapeHtml(order.mpesa?.receipt || order.paymentReference || "—")}</strong></div>
     <p class="section">Paid by</p>
-    <div class="line"><span>Name</span><span>${escapeHtml(order.customer?.name || "—")}</span></div>
+    <div class="line"><span>Name</span><span>${escapeHtml(order.mpesa?.payerName || order.customer?.name || "—")}</span></div>
     <div class="line"><span>M-Pesa phone</span><span>${escapeHtml(maskPhone(order.paymentPhone || order.customer?.phone))}</span></div>
     <p class="section">Delivery</p>
     <div class="line"><span>Recipient</span><span>${escapeHtml(order.customer?.name || "—")}</span></div>
@@ -104,6 +109,7 @@ function buildThermalReceiptHtml(order, options = {}) {
     <button type="button" onclick="window.print()">Print receipt</button>
     <a href="${escapeHtml(pdfUrl)}">Download PDF</a>
     <a href="${escapeHtml(backUrl)}">${escapeHtml(backLabel)}</a>
+    ${customerUrl ? `<a href="${escapeHtml(customerUrl)}">${escapeHtml(customerLabel)}</a>` : ""}
   </nav>
 </body>
 </html>`;
@@ -143,7 +149,7 @@ function wrapText(value, maxLength = 38) {
     return lines;
 }
 
-function buildThermalReceiptPdf(order) {
+function buildThermalReceiptPdf(order, options = {}) {
     const lines = [];
     const addLine = (text, options = {}) => {
         for (const wrapped of wrapText(text, options.maxLength || 38)) {
@@ -159,14 +165,14 @@ function buildThermalReceiptPdf(order) {
     const receiptCode = order.mpesa?.receipt || order.paymentReference || "—";
 
     addLine("PreBana Cosmetics", { bold: true, size: 14, gap: 2, maxLength: 30 });
-    addLine("CUSTOMER RECEIPT", { bold: true, size: 10, gap: 5 });
+    addLine(options.receiptTitle || "CUSTOMER RECEIPT", { bold: true, size: 10, gap: 5 });
     addLine(`Order: ${order.id}`);
     addLine(`Date: ${formatDate(order.createdAt)}`);
     addLine(`Status: ${formatPaymentStatus(order)}`);
     addLine(`M-Pesa code: ${receiptCode}`);
     addLine("--------------------------------------");
     addLine("PAID BY", { bold: true, size: 9, gap: 2 });
-    addLine(`Name: ${order.customer?.name || "—"}`);
+    addLine(`Name: ${order.mpesa?.payerName || order.customer?.name || "—"}`);
     addLine(`M-Pesa phone: ${maskPhone(order.paymentPhone || order.customer?.phone)}`);
     addLine("--------------------------------------");
     addLine("DELIVERY", { bold: true, size: 9, gap: 2 });

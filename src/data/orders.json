@@ -1,6 +1,43 @@
 {
   "orders": [
     {
+      "id": "PB-20261124-42C030",
+      "customer": {
+        "userId": "a4cf3cf4-cb35-4015-93cd-4a5b3e805fbc",
+        "name": "Torres Wachira Robert",
+        "email": "test2025@gmail.com",
+        "phone": "+254797510626",
+        "address": "mukuru kayaba, enterprise rd, naiobi kenya"
+      },
+      "paymentPhone": "254797510626",
+      "items": [
+        {
+          "productId": "PB-20261124-D31680",
+          "name": "Nice & Lovely Hair Food Moisturizing & Conditioning",
+          "quantity": 1,
+          "unitPrice": 280,
+          "lineTotal": 280
+        }
+      ],
+      "total": 280,
+      "note": "",
+      "status": "received",
+      "paymentStatus": "pending",
+      "paymentMethod": "M-Pesa STK Push",
+      "inventoryDeducted": false,
+      "createdAt": "2026-11-24T15:36:59.189Z",
+      "mpesa": {
+        "checkoutRequestId": "ws_CO_24112026183702340797510626",
+        "checkoutRequestIds": [
+          "ws_CO_24112026183702340797510626"
+        ],
+        "merchantRequestId": "2636-49a0-b691-c125e86ba4c748217391",
+        "initiatedAt": "2026-11-24T15:37:00.678Z",
+        "receipt": null,
+        "amount": null
+      }
+    },
+    {
       "id": "PB-20261123-E4F11E",
       "customer": {
         "userId": "12effd3f-bf07-46b5-a4e0-28eed2b62d49",

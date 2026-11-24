@@ -136,7 +136,9 @@ router.get('/admin/orders/:id/receipt', requireRole('admin'), async (req, res, n
         return res.type('html').send(receiptController.buildThermalReceiptHtml(order, {
             pdfUrl: `/pre/admin/orders/${encodeURIComponent(order.id)}/receipt.pdf`,
             backUrl: '/pre/admin#accounts',
-            backLabel: 'Back to customers'
+            backLabel: 'Back to customers',
+            customerUrl: '/pre/store',
+            receiptTitle: 'Parcel receipt'
         }));
     } catch (error) {
         return next(error);
@@ -148,7 +150,9 @@ router.get('/admin/orders/:id/receipt.pdf', requireRole('admin'), async (req, re
         if (!order) {
             return res.status(404).send('Order not found.');
         }
-        const pdf = await receiptController.buildThermalReceiptPdf(order);
+        const pdf = await receiptController.buildThermalReceiptPdf(order, {
+            receiptTitle: 'PARCEL RECEIPT'
+        });
         const safeOrderId = String(order.id).replace(/[^a-zA-Z0-9_-]/g, '');
         return res
             .type('application/pdf')

@@ -8,13 +8,16 @@ test("admin receipt page offers thermal printing and an admin PDF download", asy
         createdAt: "2026-11-24T00:00:00.000Z",
         paymentStatus: "pending",
         total: 10,
+        mpesa: { payerName: "M-Pesa Payer" },
         customer: { name: "Customer", phone: "+254700000000", address: "Nairobi" },
         items: [{ name: "Lotion", quantity: 1, lineTotal: 10 }]
     };
     const html = buildThermalReceiptHtml(order, {
         pdfUrl: "/pre/admin/orders/PB-20261124-ABC123/receipt.pdf",
         backUrl: "/pre/admin#accounts",
-        backLabel: "Back to customers"
+        backLabel: "Back to customers",
+        customerUrl: "/pre/store",
+        receiptTitle: "Parcel receipt"
     });
 
     assert.match(html, /@page \{ size: 80mm auto;/);
@@ -23,9 +26,14 @@ test("admin receipt page offers thermal printing and an admin PDF download", asy
     assert.match(html, /\/pre\/admin\/orders\/PB-20261124-ABC123\/receipt\.pdf/);
     assert.match(html, /\/pre\/admin#accounts/);
     assert.match(html, /Back to customers/);
+    assert.match(html, /\/pre\/store/);
+    assert.match(html, /Customer page/);
+    assert.match(html, /Parcel receipt/);
+    assert.match(html, /<span>Name<\/span><span>M-Pesa Payer<\/span>/);
+    assert.match(html, /<span>Recipient<\/span><span>Customer<\/span>/);
     assert.match(html, /PENDING/);
     assert.match(html, /Order total: KSh 10/);
 
-    const pdf = await buildThermalReceiptPdf(order);
+    const pdf = await buildThermalReceiptPdf(order, { receiptTitle: "PARCEL RECEIPT" });
     assert.equal(pdf.subarray(0, 4).toString(), "%PDF");
 });

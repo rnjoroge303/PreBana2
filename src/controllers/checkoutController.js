@@ -234,6 +234,9 @@ async function applyMpesaCallback(checkoutRequestId, callback) {
         order.paymentResultDescription = String(callback.resultDescription || "").slice(0, 255);
         order.mpesa = {
             ...order.mpesa,
+            ...(typeof callback.payerName === "string" && callback.payerName.trim()
+                ? { payerName: callback.payerName.trim().slice(0, 100) }
+                : {}),
             receipt: receipt || null,
             amount: Number.isFinite(receivedAmount) ? receivedAmount : null,
             completedAt: new Date().toISOString()
