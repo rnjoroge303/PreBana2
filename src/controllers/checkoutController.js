@@ -241,8 +241,7 @@ function normalizeCart(items) {
 
 async function showCheckout(req, res, next) {
     try {
-        const products = (await productController.readProducts())
-            .filter((product) => Number(product.stock) > 0);
+        const products = await productController.readProducts();
         res.render("checkout", {
             products,
             customerEmail: req.authUser.email

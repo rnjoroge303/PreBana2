@@ -164,7 +164,27 @@
 
         try {
             const storedCart = JSON.parse(window.localStorage.getItem(cartStorageKey) || "[]");
-            cart = Array.isArray(storedCart) ? storedCart.filter((item) => productById.has(item.productId) && Number.isInteger(item.quantity) && item.quantity > 0) : [];
+            const validCart = Array.isArray(storedCart)
+                ? storedCart.filter((item) => item.productId && Number.isInteger(item.quantity) && item.quantity > 0)
+                : [];
+            let availabilityChanged = false;
+            cart = validCart.flatMap((item) => {
+                const product = productById.get(item.productId);
+                const stock = Number(product?.stock);
+                if (!product || !Number.isInteger(stock) || stock < 1) {
+                    availabilityChanged = true;
+                    return [];
+                }
+                if (item.quantity > stock) {
+                    item.quantity = stock;
+                    availabilityChanged = true;
+                }
+                return [item];
+            });
+            if (availabilityChanged) {
+                checkoutError.textContent = "Your bag was updated to match current stock. Please review the quantities.";
+                checkoutError.hidden = false;
+            }
         } catch {
             cart = [];
         }
@@ -215,7 +235,7 @@
                 row.className = "checkoutItem";
                 details.className = "checkoutItemDetails";
                 name.textContent = product.name;
-                quantity.textContent = `Qty ${item.quantity}`;
+                quantity.textContent = `Qty ${item.quantity} · ${Number(product.stock)} in stock`;
                 price.textContent = formatPrice(lineTotal);
                 details.append(name, quantity);
                 row.append(details, price);

@@ -48,6 +48,23 @@ test("client sign-in and sign-up forms preserve a checkout return path", async (
     assert.match(signupHtml, /\/pre\/client\/login\?next=%2Fpre%2Fcheckout/);
 });
 
+test("product cards show stock and expose the limit used by the shopping bag", async () => {
+    const html = await ejs.renderFile(path.join(viewsDirectory, "client", "includes", "productCard.ejs"), {
+        product: {
+            id: "PB-TEST-1",
+            name: "Test lotion",
+            category: "body",
+            description: "Daily care",
+            price: 250,
+            stock: 3,
+            images: []
+        }
+    });
+
+    assert.match(html, /data-stock="3"/);
+    assert.match(html, /<p class="productStock"><strong>3<\/strong> available<\/p>/);
+});
+
 test("receipt EJS view escapes database fields and links to the invoice PDF", async () => {
     const html = await ejs.renderFile(path.join(viewsDirectory, "finalReciptpdf.ejs"), {
         receipt: {

@@ -225,7 +225,8 @@
 			input.className = "formControl";
 			input.id = `imageUrl${rowNumber}`;
 			input.name = "imageUrls";
-			input.type = "url";
+			input.type = "text";
+			input.inputMode = "url";
 			input.placeholder = "https://example.com/product.jpg";
 			input.value = value;
 			label.append(input);

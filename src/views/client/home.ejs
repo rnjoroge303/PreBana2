@@ -231,6 +231,32 @@
             }, 2600);
         }
 
+        function reconcileCartWithStock() {
+            const products = new Map([...document.querySelectorAll(".product[data-product-id]")].map((product) => [
+                product.dataset.productId,
+                Number(product.dataset.stock)
+            ]));
+            let cartChanged = false;
+            cartItems = cartItems.flatMap((item) => {
+                const stock = products.get(item.productId);
+                if (!Number.isInteger(stock) || stock < 1) {
+                    cartChanged = true;
+                    return [];
+                }
+                if (item.quantity > stock) {
+                    item.quantity = stock;
+                    cartChanged = true;
+                }
+                return [item];
+            });
+            if (cartChanged) {
+                updateCartCount();
+                showToast("Your bag was updated to match available stock.");
+            }
+        }
+
+        reconcileCartWithStock();
+
         searchInput.addEventListener("input", () => {
             categoryFilter.value = "all";
             filterProducts();
@@ -255,7 +281,16 @@
                     showToast("This product could not be added right now.");
                     return;
                 }
+                const availableStock = Number(productCard.dataset.stock);
                 const cartItem = cartItems.find((item) => item.productId === productId);
+                if (!Number.isInteger(availableStock) || availableStock < 1) {
+                    showToast(`${button.dataset.productName} is out of stock.`);
+                    return;
+                }
+                if (cartItem && cartItem.quantity >= availableStock) {
+                    showToast(`Only ${availableStock} ${button.dataset.productName} available.`);
+                    return;
+                }
                 if (cartItem) {
                     cartItem.quantity += 1;
                 } else {

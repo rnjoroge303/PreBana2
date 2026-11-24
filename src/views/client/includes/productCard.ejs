@@ -1,7 +1,7 @@
 <% const productImages = Array.isArray(product.images) ? product.images : []; %>
 <% const categoryNames = { featured: "Featured", hair: "Hair care", face: "Face care", body: "Body care", baby: "Baby care", nails: "Nail care", mens: "Men's care" }; %>
 <div class="category-section">
-    <article class="product" data-product-id="<%= product.id %>" data-category="<%= product.category %>">
+    <article class="product" data-product-id="<%= product.id %>" data-category="<%= product.category %>" data-stock="<%= Number(product.stock) %>">
         <div class="productMedia">
             <% if (productImages.length) { %>
                 <div class="productGallery" data-gallery-images="<%= JSON.stringify(productImages) %>">
@@ -28,6 +28,7 @@
             <p class="productCategory"><%= categoryNames[product.category] || "Beauty" %></p>
             <h3 class="pname"><%= product.name %></h3>
             <p class="desc"><%= product.description || "Thoughtfully chosen for your everyday routine." %></p>
+            <p class="productStock"><strong><%= Number(product.stock) %></strong> available</p>
             <div class="productBottom">
                 <p class="pprice">Ksh <%= Number(product.price).toLocaleString("en-KE") %></p>
                 <button class="addToBag" type="button" data-add-to-bag data-product-name="<%= product.name %>" aria-label="Add <%= product.name %> to bag">

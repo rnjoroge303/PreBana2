@@ -249,6 +249,15 @@
     font-size: 0.74rem;
     line-height: 1.55;
 }
+.productStock{
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.68rem;
+}
+.productStock strong{
+    color: var(--ink);
+    font-weight: 700;
+}
 .productBottom{
     display: flex;
     align-items: center;
