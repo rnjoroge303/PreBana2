@@ -16,32 +16,6 @@ function getCallbackMetadata(callback) {
     }, {});
 }
 
-function maskPhone(value) {
-    const digits = String(value || '').replace(/\D/g, '');
-    return digits.length > 4 ? `${digits.slice(0, 3)}******${digits.slice(-2)}` : value ?? null;
-}
-
-function getCallbackLogPayload(callback) {
-    const callbackMetadata = callback.CallbackMetadata;
-    const items = callbackMetadata?.Item;
-    const redactPhone = (item) => item?.Name === 'PhoneNumber'
-        ? { ...item, Value: maskPhone(item.Value) }
-        : item;
-    const loggedItems = Array.isArray(items)
-        ? items.map(redactPhone)
-        : items ? redactPhone(items) : items;
-
-    return {
-        ...callback,
-        ...(callbackMetadata ? {
-            CallbackMetadata: {
-                ...callbackMetadata,
-                ...(items ? { Item: loggedItems } : {})
-            }
-        } : {})
-    };
-}
-
 function getPayerName(metadata) {
     const explicitName = [metadata.PayerName, metadata.CustomerName, metadata.Name]
         .find((value) => typeof value === 'string' && value.trim());
@@ -54,12 +28,6 @@ function getPayerName(metadata) {
 }
 
 async function handleMpesaCallback(req, res) {
-    console.info('[M-Pesa callback] HTTP request received', {
-        method: req.method,
-        path: req.originalUrl || req.url,
-        contentType: req.get?.('content-type') || req.headers?.['content-type'] || null,
-        hasBody: Boolean(req.body)
-    });
     const callback = req.body?.Body?.stkCallback;
     if (!callback) {
         console.warn('[M-Pesa callback] Missing stkCallback payload', {
@@ -85,26 +53,6 @@ async function handleMpesaCallback(req, res) {
         ? metadata.MpesaReceiptNumber
         : null;
 
-    if (resultCode === 0) {
-        console.info(
-            '[M-Pesa callback] Complete transaction payload',
-            JSON.stringify(getCallbackLogPayload(callback), null, 2)
-        );
-    } else {
-        console.info('[M-Pesa callback] Safaricom payload', {
-            checkoutRequestId,
-            merchantRequestId: callback.MerchantRequestID || null,
-            resultCode,
-            resultDescription: String(callback.ResultDesc || '').slice(0, 255),
-            metadata: {
-                amount: metadata.Amount ?? null,
-                receipt,
-                transactionDate: metadata.TransactionDate ?? null,
-                phoneNumber: maskPhone(metadata.PhoneNumber)
-            }
-        });
-    }
-
     try {
         const order = await checkoutController.applyMpesaCallback(checkoutRequestId, {
             resultCode,
@@ -120,11 +68,6 @@ async function handleMpesaCallback(req, res) {
             });
             return acknowledge(res);
         }
-        console.info('[M-Pesa callback processed]', {
-            checkoutRequestId,
-            paymentStatus: order.paymentStatus,
-            resultCode
-        });
         return acknowledge(res);
     } catch (error) {
         console.error('[M-Pesa callback] Payment update failed:', error.message);
@@ -132,4 +75,4 @@ async function handleMpesaCallback(req, res) {
     }
 }
 
-module.exports = { getCallbackLogPayload, getPayerName, handleMpesaCallback };
+module.exports = { getPayerName, handleMpesaCallback };

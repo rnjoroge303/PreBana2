@@ -2,8 +2,8 @@ const checkoutController = require("./checkoutController");
 const { formatPhoneNumber, initiateStkPush } = require("./stkPush");
 
 function accountReference(orderId) {
-    const suffix = String(orderId).replace(/[^a-z0-9]/gi, "").slice(-10);
-    return `PB${suffix}`.slice(0, 12);
+    const suffix = String(orderId).replace(/[^a-z0-9]/gi, "").slice(-4).toUpperCase();
+    return `ORD${suffix}`;
 }
 
 async function initiateOrderPayment(req, res) {
@@ -17,6 +17,7 @@ async function initiateOrderPayment(req, res) {
 
     try {
         const phoneNumber = formatPhoneNumber(req.body?.phoneNumber || order.paymentPhone || order.customer.phone);
+        const orderReference = accountReference(order.id);
         console.info("[M-Pesa STK] Client payment requested", {
             orderId: order.id,
             userId: req.authUser.id,
@@ -26,8 +27,8 @@ async function initiateOrderPayment(req, res) {
         const response = await initiateStkPush({
             phoneNumber,
             amount: order.total,
-            accountReference: accountReference(order.id),
-            transactionDesc: "PreBana order"
+            accountReference: orderReference,
+            transactionDesc: `Order No ${orderReference.slice(3)}`
         });
         if (String(response.ResponseCode) !== "0" || !response.CheckoutRequestID) {
             return res.status(502).json({ error: response.ResponseDescription || "M-Pesa did not accept the payment request." });
@@ -71,4 +72,4 @@ async function getOrderPaymentStatus(req, res) {
     });
 }
 
-module.exports = { getOrderPaymentStatus, initiateOrderPayment };
+module.exports = { accountReference, getOrderPaymentStatus, initiateOrderPayment };
