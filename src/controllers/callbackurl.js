@@ -86,7 +86,10 @@ async function handleMpesaCallback(req, res) {
         : null;
 
     if (resultCode === 0) {
-        console.info('[M-Pesa callback] Complete transaction payload', getCallbackLogPayload(callback));
+        console.info(
+            '[M-Pesa callback] Complete transaction payload',
+            JSON.stringify(getCallbackLogPayload(callback), null, 2)
+        );
     } else {
         console.info('[M-Pesa callback] Safaricom payload', {
             checkoutRequestId,
