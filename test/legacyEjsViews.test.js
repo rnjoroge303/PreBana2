@@ -43,6 +43,14 @@ test("storefront offers public browsing and shows account actions based on sign-
     assert.match(customerHtml, /const isAuthenticated = true;/);
 });
 
+test("mobile storefront navigation shows the account action label", async () => {
+    const styles = await fs.readFile(path.join(__dirname, "..", "public", "styles", "css", "main.css"), "utf8");
+    const mobileStyles = styles.slice(styles.lastIndexOf("@media (max-width: 700px)"));
+
+    assert.match(mobileStyles, /\.navActions \.accountAction\{\s*display:\s*flex;/);
+    assert.match(mobileStyles, /\.accountAction span\{\s*display:\s*inline;/);
+});
+
 test("client sign-in and sign-up forms preserve a checkout return path", async () => {
     const loginHtml = await ejs.renderFile(path.join(viewsDirectory, "client", "login.ejs"), {
         error: null,
