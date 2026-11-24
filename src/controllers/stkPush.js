@@ -94,7 +94,6 @@ const initiateStkPush = async ({ phoneNumber, amount, accountReference, transact
         transactionDesc: description
     });
     const accessToken = await getMpesaAccessToken();
-
     try {
         const response = await axios.post(
             `${baseUrl}/mpesa/stkpush/v1/processrequest`,

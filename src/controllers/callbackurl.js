@@ -21,6 +21,27 @@ function maskPhone(value) {
     return digits.length > 4 ? `${digits.slice(0, 3)}******${digits.slice(-2)}` : value ?? null;
 }
 
+function getCallbackLogPayload(callback) {
+    const callbackMetadata = callback.CallbackMetadata;
+    const items = callbackMetadata?.Item;
+    const redactPhone = (item) => item?.Name === 'PhoneNumber'
+        ? { ...item, Value: maskPhone(item.Value) }
+        : item;
+    const loggedItems = Array.isArray(items)
+        ? items.map(redactPhone)
+        : items ? redactPhone(items) : items;
+
+    return {
+        ...callback,
+        ...(callbackMetadata ? {
+            CallbackMetadata: {
+                ...callbackMetadata,
+                ...(items ? { Item: loggedItems } : {})
+            }
+        } : {})
+    };
+}
+
 function getPayerName(metadata) {
     const explicitName = [metadata.PayerName, metadata.CustomerName, metadata.Name]
         .find((value) => typeof value === 'string' && value.trim());
@@ -64,18 +85,22 @@ async function handleMpesaCallback(req, res) {
         ? metadata.MpesaReceiptNumber
         : null;
 
-    console.info('[M-Pesa callback] Safaricom payload', {
-        checkoutRequestId,
-        merchantRequestId: callback.MerchantRequestID || null,
-        resultCode,
-        resultDescription: String(callback.ResultDesc || '').slice(0, 255),
-        metadata: {
-            amount: metadata.Amount ?? null,
-            receipt,
-            transactionDate: metadata.TransactionDate ?? null,
-            phoneNumber: maskPhone(metadata.PhoneNumber)
-        }
-    });
+    if (resultCode === 0) {
+        console.info('[M-Pesa callback] Complete transaction payload', getCallbackLogPayload(callback));
+    } else {
+        console.info('[M-Pesa callback] Safaricom payload', {
+            checkoutRequestId,
+            merchantRequestId: callback.MerchantRequestID || null,
+            resultCode,
+            resultDescription: String(callback.ResultDesc || '').slice(0, 255),
+            metadata: {
+                amount: metadata.Amount ?? null,
+                receipt,
+                transactionDate: metadata.TransactionDate ?? null,
+                phoneNumber: maskPhone(metadata.PhoneNumber)
+            }
+        });
+    }
 
     try {
         const order = await checkoutController.applyMpesaCallback(checkoutRequestId, {
@@ -104,4 +129,4 @@ async function handleMpesaCallback(req, res) {
     }
 }
 
-module.exports = { getPayerName, handleMpesaCallback };
+module.exports = { getCallbackLogPayload, getPayerName, handleMpesaCallback };
