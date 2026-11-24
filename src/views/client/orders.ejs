@@ -153,7 +153,8 @@
                         if (!response.ok) {
                             throw new Error(result.error || "The M-Pesa prompt could not be sent.");
                         }
-                        ordersFeedback.textContent = "M-Pesa prompt sent. Approve it on your phone; your order will update after confirmation.";
+                        const orderNumber = order.id.replace(/[^a-z0-9]/gi, "").slice(-4).toUpperCase();
+                        ordersFeedback.textContent = `Prompt sent for Order No ${orderNumber}. Safaricom's PIN screen may show only the amount and payee; verify those before approving.`;
                         stkButton.textContent = "Prompt sent";
                     } catch (error) {
                         ordersFeedback.textContent = error.message;

@@ -102,6 +102,7 @@
                 <span class="successMark" aria-hidden="true">M</span>
                 <p class="eyebrow"><span class="eyebrowLine"></span> M-PESA PAYMENT</p>
                 <h2 id="mpesaModalTitle">Waiting for M-Pesa confirmation</h2>
+                <p class="orderReference">Order No <strong id="mpesaOrderNumber"></strong></p>
                 <p id="mpesaModalMessage">We are sending a secure M-Pesa prompt to your delivery phone. Approve it on
                     your phone to complete payment.</p>
                 <button class="placeOrderButton" id="retryMpesaButton" type="button" hidden>Send M-Pesa prompt again
@@ -155,6 +156,7 @@
         const cancelCheckoutButton = document.getElementById("cancelCheckoutButton");
         const viewReceiptLink = document.getElementById("viewReceiptLink");
         const mpesaModalMessage = document.getElementById("mpesaModalMessage");
+        const mpesaOrderNumber = document.getElementById("mpesaOrderNumber");
         const customerPhoneInput = document.getElementById("customerPhone");
         const ownPaymentPhoneInput = document.getElementById("ownPaymentPhone");
         const ownPaymentPhoneField = document.getElementById("ownPaymentPhoneField");
@@ -333,6 +335,7 @@
                 window.localStorage.removeItem(cartStorageKey);
                 checkoutLayout.hidden = true;
                 currentOrderId = result.orderId;
+                mpesaOrderNumber.textContent = currentOrderId.replace(/[^a-z0-9]/gi, "").slice(-4).toUpperCase();
                 document.getElementById("successOrderId").textContent = result.orderId;
                 viewReceiptLink.href = `/pre/orders/${encodeURIComponent(currentOrderId)}/receipt`;
                 mpesaModal.hidden = false;
@@ -359,7 +362,7 @@
                 if (!response.ok) {
                     throw new Error(result.error || "The M-Pesa prompt could not be sent.");
                 }
-                mpesaModalMessage.textContent = "Prompt sent. Approve the payment on your phone; this page will update when M-Pesa confirms it.";
+                mpesaModalMessage.textContent = `Prompt sent for Order No ${mpesaOrderNumber.textContent}. Safaricom's PIN screen may show only the amount and payee; verify those before approving.`;
                 pollPaymentStatus(0);
             } catch (error) {
                 mpesaModalMessage.textContent = `${error.message} Check the phone number and try again, or use the manual confirmation option below.`;

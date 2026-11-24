@@ -14,6 +14,16 @@ test("payment EJS view renders its page title", async () => {
     assert.match(html, /<title>Payment<\/title>/);
 });
 
+test("checkout shows the order number while the M-Pesa prompt is pending", async () => {
+    const html = await ejs.renderFile(path.join(viewsDirectory, "client", "checkout.ejs"), {
+        products: [],
+        customerEmail: "customer@example.com"
+    });
+
+    assert.match(html, /Order No <strong id="mpesaOrderNumber"><\/strong>/);
+    assert.match(html, /Safaricom's PIN screen may show only the amount and payee/);
+});
+
 test("admin product image paths bypass browser URL validation", async () => {
     const formHtml = await ejs.renderFile(path.join(viewsDirectory, "admin", "includes", "product.ejs"), {
         productId: "PB-TEST-1"
