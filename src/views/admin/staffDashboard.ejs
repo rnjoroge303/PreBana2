@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ad5b78">
+    <title>PreBana Staff | Point of sale</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/css/admin.css">
+</head>
+<body>
+    <div class="adminShell">
+        <aside class="adminSidebar">
+            <a class="adminBrand" href="/pre/admin#pos" aria-label="PreBana point of sale">
+                <img class="adminBrandLogo" src="/uploads/logo/preLogo.jpeg" alt="PreBana Cosmetics">
+            </a>
+            <p class="navCaption">STAFF WORKSPACE</p>
+            <nav class="adminNav" aria-label="Staff navigation">
+                <a class="adminNavLink" href="#pos" data-staff-panel="pos" aria-current="page"><span>Point of sale</span></a>
+                <a class="adminNavLink" href="#reports" data-staff-panel="reports"><span>Daily sales</span></a>
+            </nav>
+            <div class="sidebarBottom">
+                <a class="storeLink" href="/pre/store" target="_blank" rel="noreferrer">View storefront <span aria-hidden="true">↗</span></a>
+                <form class="adminLogoutForm" action="/pre/logout" method="post"><input type="hidden" name="role" value="staff"><button class="storeLink" type="submit">Sign out <span aria-hidden="true">↗</span></button></form>
+                <div class="adminProfile"><span class="profileAvatar">S</span><span><strong><%= operator.email %></strong><small>Staff</small></span></div>
+            </div>
+        </aside>
+        <main class="adminMain">
+            <header class="adminTopbar">
+                <div class="breadcrumbs"><span>Workspace</span><span aria-hidden="true">/</span><strong id="staffBreadcrumb">Point of sale</strong></div>
+                <div class="topbarMeta"><span class="dateLabel" id="staffTodayLabel"></span><span class="topbarDivider"></span><span class="liveDot"></span><span>Live store</span></div>
+            </header>
+            <div class="adminContent">
+                <div class="pageHeading"><div><p class="pageEyebrow">PREBANA COSMETICS</p><h1 id="staffViewTitle">Point of sale</h1></div></div>
+                <section class="staffPanel" id="staffPosPanel"><%- include("includes/pos") %></section>
+                <section class="staffPanel" id="staffReportsPanel" hidden><%- include("includes/dailySales") %></section>
+            </div>
+        </main>
+    </div>
+    <script>
+        const staffPanelTitles = { pos: "Point of sale", reports: "Daily sales" };
+        const staffLinks = document.querySelectorAll("[data-staff-panel]");
+        const staffPanels = { pos: document.getElementById("staffPosPanel"), reports: document.getElementById("staffReportsPanel") };
+        function showStaffPanel(){
+            const active = staffPanelTitles[window.location.hash.slice(1)] ? window.location.hash.slice(1) : "pos";
+            Object.entries(staffPanels).forEach(([name, panel]) => { panel.hidden = name !== active; });
+            staffLinks.forEach((link) => {
+                if (link.dataset.staffPanel === active) link.setAttribute("aria-current", "page");
+                else link.removeAttribute("aria-current");
+            });
+            document.getElementById("staffViewTitle").textContent = staffPanelTitles[active];
+            document.getElementById("staffBreadcrumb").textContent = staffPanelTitles[active];
+        }
+        document.getElementById("staffTodayLabel").textContent = new Intl.DateTimeFormat("en-KE", {
+            weekday: "short", day: "numeric", month: "short", year: "numeric"
+        }).format(new Date());
+        staffLinks.forEach((link) => link.addEventListener("click", () => window.setTimeout(showStaffPanel)));
+        window.addEventListener("hashchange", showStaffPanel);
+        showStaffPanel();
+    </script>
+</body>
+</html>

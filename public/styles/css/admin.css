@@ -1564,6 +1564,207 @@ a {
     background: white;
 }
 
+.posLayout,
+.teamLayout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(250px, 0.8fr);
+    gap: 16px;
+}
+
+.posBuilder,
+.posPayment,
+.teamFormCard {
+    min-width: 0;
+    padding: 18px;
+}
+
+.posBuilder h3,
+.posPayment h3,
+.teamFormCard h3 {
+    margin: 0 0 16px;
+    font-family: "Manrope", sans-serif;
+    font-size: 0.95rem;
+}
+
+.posAddRow {
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+    margin-bottom: 15px;
+}
+
+.posField {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 13px;
+    color: var(--admin-ink-soft);
+    font-size: 0.69rem;
+    font-weight: 600;
+}
+
+.posField input,
+.posField select,
+.dailyDateField input {
+    width: 100%;
+    min-height: 38px;
+    padding: 0 10px;
+    border: 1px solid var(--admin-line);
+    border-radius: 5px;
+    background: white;
+    color: var(--admin-ink);
+    font-size: 0.75rem;
+}
+
+.posProductField {
+    flex: 1 1 auto;
+    min-width: 100px;
+}
+
+.posSearchField {
+    flex: 1 1 180px;
+    min-width: 180px;
+}
+
+.posQuantityField {
+    width: 70px;
+    flex: 0 0 70px;
+}
+
+.posAddButton {
+    min-height: 38px;
+    flex: 0 0 auto;
+}
+
+.shippingGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+}
+
+.shippingRateField {
+    margin: 0;
+}
+
+.shippingInputPrefix {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--admin-muted);
+}
+
+.shippingInputPrefix input {
+    min-width: 0;
+}
+
+.posCartTable {
+    min-width: 480px;
+}
+
+.posCartTable td {
+    white-space: normal;
+}
+
+.posTotal {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--admin-line);
+    color: var(--admin-ink-soft);
+    font-size: 0.78rem;
+}
+
+.posTotal strong {
+    color: var(--admin-ink);
+    font-size: 1rem;
+}
+
+.posSubmit {
+    width: 100%;
+}
+
+.posPaymentHint {
+    margin: 0 0 12px;
+    color: var(--admin-muted);
+    font-size: 0.68rem;
+    line-height: 1.5;
+}
+
+.dailyReportSection {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--admin-line);
+}
+
+.dailyReportActions {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.dailyDateField {
+    display: grid;
+    gap: 5px;
+    color: var(--admin-ink-soft);
+    font-size: 0.67rem;
+    font-weight: 600;
+}
+
+.dailyDateField input {
+    min-width: 145px;
+}
+
+.dailyReportMetrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+}
+
+.dailyReportMetrics .metricCard {
+    min-width: 0;
+    padding: 13px;
+}
+
+.dailyReportMetrics .metricCard > span {
+    color: var(--admin-muted);
+    font-size: 0.65rem;
+}
+
+.dailyReportMetrics .metricCard > strong {
+    display: block;
+    margin-top: 7px;
+    font-size: 1.05rem;
+}
+
+.dailyReportMetrics .metricCard > p {
+    margin: 5px 0 0;
+    color: var(--admin-ink-soft);
+    font-size: 0.65rem;
+}
+
+.dailyReportGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dailyTransactions {
+    margin-top: 14px;
+}
+
+.teamLayout {
+    grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr);
+}
+
+.teamFormCard form {
+    display: grid;
+    gap: 3px;
+}
+
+.staffPanel {
+    min-width: 0;
+}
+
 @media (max-width: 1100px) {
     .adminSidebar {
         width: 218px;
@@ -1589,9 +1790,18 @@ a {
     .formAside {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .posLayout,
+    .teamLayout,
+    .dailyReportGrid {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 @media (max-width: 700px) {
+    .shippingGrid {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
     .adminSidebar {
         right: 0;
         bottom: auto;
@@ -1677,6 +1887,24 @@ a {
     .pageHeading {
         align-items: center;
         margin-bottom: 18px;
+    }
+
+    .posAddRow,
+    .dailyReportActions {
+        align-items: stretch;
+        flex-wrap: wrap;
+    }
+
+    .dailyReportMetrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dailyDateField {
+        flex: 1 1 100%;
+    }
+
+    .dailyDateField input {
+        width: 100%;
     }
 
     .pageHeading h1 {

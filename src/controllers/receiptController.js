@@ -93,7 +93,9 @@ function buildThermalReceiptHtml(order, options = {}) {
     <div class="line"><span>Order</span><strong>${escapeHtml(order.id)}</strong></div>
     <div class="line"><span>Date</span><span>${escapeHtml(formatDate(order.createdAt))}</span></div>
     <div class="line"><span>Status</span><strong>${escapeHtml(formatPaymentStatus(order))}</strong></div>
+    <div class="line"><span>Payment method</span><strong>${escapeHtml(order.paymentMethod || "—")}</strong></div>
     <div class="line"><span>M-Pesa code</span><strong>${escapeHtml(order.mpesa?.receipt || order.paymentReference || "—")}</strong></div>
+    ${order.salesChannel === "physical" ? `<div class="line"><span>Sold by</span><span>${escapeHtml(order.soldBy?.email || order.soldBy?.userId || "—")}</span></div>` : ""}
     <p class="section">Paid by</p>
     <div class="line"><span>Name</span><span>${escapeHtml(order.mpesa?.payerName || order.customer?.name || "—")}</span></div>
     <div class="line"><span>M-Pesa phone</span><span>${escapeHtml(maskPhone(order.paymentPhone || order.customer?.phone))}</span></div>
@@ -101,6 +103,9 @@ function buildThermalReceiptHtml(order, options = {}) {
     <div class="line"><span>Recipient</span><span>${escapeHtml(order.customer?.name || "—")}</span></div>
     <div class="line"><span>Phone</span><span>${escapeHtml(order.customer?.phone || "—")}</span></div>
     <div class="line"><span>Location</span><span>${escapeHtml(order.customer?.address || "—")}</span></div>
+    <div class="line"><span>County</span><span>${escapeHtml(order.shippingCounty || order.customer?.county || "—")}</span></div>
+    <div class="line"><span>Subtotal</span><span>${formatCurrency(order.subtotal ?? order.total)}</span></div>
+    <div class="line"><span>Shipping fee</span><span>${formatCurrency(order.shippingFee || 0)}</span></div>
     <p class="section">Items</p>
     <table><tbody>${rows || "<tr><td>No items listed</td><td></td></tr>"}</tbody></table>
     <div class="total">${totalLabel}: ${formatCurrency(order.total)}</div>
@@ -169,7 +174,11 @@ function buildThermalReceiptPdf(order, options = {}) {
     addLine(`Order: ${order.id}`);
     addLine(`Date: ${formatDate(order.createdAt)}`);
     addLine(`Status: ${formatPaymentStatus(order)}`);
+    addLine(`Payment method: ${order.paymentMethod || "—"}`);
     addLine(`M-Pesa code: ${receiptCode}`);
+    if (order.salesChannel === "physical"){
+        addLine(`Sold by: ${order.soldBy?.email || order.soldBy?.userId || "—"}`);
+    }
     addLine("--------------------------------------");
     addLine("PAID BY", { bold: true, size: 9, gap: 2 });
     addLine(`Name: ${order.mpesa?.payerName || order.customer?.name || "—"}`);
@@ -179,6 +188,9 @@ function buildThermalReceiptPdf(order, options = {}) {
     addLine(`Recipient: ${order.customer?.name || "—"}`);
     addLine(`Phone: ${order.customer?.phone || "—"}`);
     addLine(`Location: ${order.customer?.address || "—"}`);
+    addLine(`County: ${order.shippingCounty || order.customer?.county || "—"}`);
+    addLine(`Subtotal: ${formatCurrency(order.subtotal ?? order.total)}`);
+    addLine(`Shipping fee: ${formatCurrency(order.shippingFee || 0)}`);
     addLine("--------------------------------------");
     addLine("ITEMS", { bold: true, size: 9, gap: 2 });
     items.forEach((item) => {

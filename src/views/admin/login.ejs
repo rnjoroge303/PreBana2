@@ -17,23 +17,23 @@
                 <img class="authBrandLogo" src="/uploads/logo/preLogo.jpeg" alt="PreBana Cosmetics">
             </a>
             <div class="authVisualCopy"><p>PREBANA COSMETICS</p><h1>Run your store<br>with clarity.</h1><span>Catalog, customers, and store activity in one place.</span></div>
-            <span class="authVisualFoot">ADMINISTRATOR ACCESS <span aria-hidden="true">·</span> NAIROBI</span>
+            <span class="authVisualFoot">ADMIN &amp; STAFF ACCESS <span aria-hidden="true">·</span> NAIROBI</span>
         </section>
         <section class="authFormPanel">
             <a class="authBack" href="/pre/store">← Back to storefront</a>
             <div class="authFormWrap">
-                <p class="authEyebrow">ADMINISTRATOR ACCESS</p>
+                <p class="authEyebrow">ADMIN &amp; STAFF ACCESS</p>
                 <h2>Sign in to your store.</h2>
-                <p class="authIntro">Use your administrator account to manage PreBana.</p>
+                <p class="authIntro">Sign in with your admin or staff account.</p>
                 <% if (error) { %><p class="authError" role="alert"><%= error %></p><% } %>
                 <form class="authForm" action="/pre/admin/login" method="post">
-                    <label for="email">Admin email</label>
+                    <label for="email">Email</label>
                     <input id="email" name="email" type="email" autocomplete="username" required placeholder="admin@example.com">
                     <label for="password">Password</label>
                     <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password">
-                    <button class="authSubmit" type="submit">Admin sign in <span aria-hidden="true">→</span></button>
+                    <button class="authSubmit" type="submit">Sign in <span aria-hidden="true">→</span></button>
                 </form>
-                <p class="authSecurityNote">Administrator accounts can only be created by a signed-in administrator.</p>
+                <p class="authSecurityNote">Staff accounts are created by an administrator.</p>
             </div>
             <footer class="authFooter">Secure store management.</footer>
         </section>

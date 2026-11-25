@@ -35,9 +35,25 @@
 					<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3 20a6 6 0 0 1 12 0M16 5.5a3 3 0 0 1 0 5.8M18 14a5 5 0 0 1 3 4.6"></path></svg>
 					<span>Customers</span>
 				</a>
+				<a class="adminNavLink" href="#orders" data-panel-link="orders">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 3h12v18H6z"></path><path d="M9 7h6M9 11h6M9 15h4"></path></svg>
+					<span>Orders</span>
+				</a>
+				<a class="adminNavLink" href="#shipping" data-panel-link="shipping">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"></path><circle cx="7" cy="18" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>
+					<span>Shipping</span>
+				</a>
+				<a class="adminNavLink" href="#pos" data-panel-link="pos">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M7 9h10M7 13h3M14 13h3"></path></svg>
+					<span>Point of sale</span>
+				</a>
 				<a class="adminNavLink" href="#reports" data-panel-link="reports">
 					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19V5M4 19h17M8 15l4-4 3 2 5-6"></path></svg>
 					<span>Reports</span>
+				</a>
+				<a class="adminNavLink" href="#team" data-panel-link="team">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3 20a6 6 0 0 1 12 0M17 8h4M19 6v4"></path></svg>
+					<span>Staff</span>
 				</a>
 			</nav>
 			<div class="sidebarBottom">
@@ -47,7 +63,7 @@
 				<form class="adminLogoutForm" action="/pre/logout" method="post"><input type="hidden" name="role" value="admin"><button class="storeLink" type="submit">Sign out <span aria-hidden="true">↗</span></button></form>
 				<div class="adminProfile">
 					<span class="profileAvatar">P</span>
-					<span><strong>Store admin</strong><small>Administrator</small></span>
+					<span><strong><%= authUser.email %></strong><small>Administrator</small></span>
 					<span class="profileMenu" aria-hidden="true">···</span>
 				</div>
 			</div>
@@ -74,8 +90,20 @@
 				<section class="adminPanel" id="accounts" data-panel-view="accounts" aria-labelledby="viewTitle" hidden>
 					<%- include("includes/acc") %>
 				</section>
+				<section class="adminPanel" id="orders" data-panel-view="orders" aria-labelledby="viewTitle" hidden>
+					<%- include("includes/orders") %>
+				</section>
+				<section class="adminPanel" id="shipping" data-panel-view="shipping" aria-labelledby="viewTitle" hidden>
+					<%- include("includes/shipping") %>
+				</section>
+				<section class="adminPanel" id="pos" data-panel-view="pos" aria-labelledby="viewTitle" hidden>
+					<%- include("includes/pos") %>
+				</section>
 				<section class="adminPanel" id="reports" data-panel-view="reports" aria-labelledby="viewTitle" hidden>
 					<%- include("includes/report") %>
+				</section>
+				<section class="adminPanel" id="team" data-panel-view="team" aria-labelledby="viewTitle" hidden>
+					<%- include("includes/team") %>
 				</section>
 			</div>
 		</main>
@@ -86,7 +114,11 @@
 			products: "Product catalog",
 			product: "Add a product",
 			accounts: "Customer accounts",
-			reports: "Store reports"
+			orders: "All orders",
+			shipping: "County shipping",
+			pos: "Point of sale",
+			reports: "Store reports",
+			team: "Staff accounts"
 		};
 		const panels = document.querySelectorAll("[data-panel-view]");
 		const panelLinks = document.querySelectorAll("[data-panel-link]");

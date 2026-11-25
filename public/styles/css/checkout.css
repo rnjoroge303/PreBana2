@@ -128,7 +128,8 @@
 }
 
 .checkoutForm input,
-.checkoutForm textarea {
+.checkoutForm textarea,
+.checkoutForm select {
     width: 100%;
     min-height: 42px;
     padding: 10px 12px;
@@ -147,7 +148,8 @@
 }
 
 .checkoutForm input:focus,
-.checkoutForm textarea:focus {
+.checkoutForm textarea:focus,
+.checkoutForm select:focus {
     border-color: #78998a;
     box-shadow: 0 0 0 3px rgb(39 83 71 / 9%);
 }

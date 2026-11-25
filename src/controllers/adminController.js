@@ -1,13 +1,24 @@
 const checkoutController = require("./checkoutController");
 const productController = require("./productController");
+const authController = require("./authController");
+const shippingStore = require("../models/shippingStore");
 
 async function showDashboard(req, res, next) {
     try {
-        const [products, customers, orders] = await Promise.all([
+        if (req.authUser.role === "staff"){
+            const products = await productController.readProducts();
+            return res.render("admin/staffDashboard", {
+                operator: req.authUser,
+                products
+            });
+        }
+        const [products, customers, orders, shippingRates] = await Promise.all([
             productController.readProducts(),
             checkoutController.listCustomers(),
-            checkoutController.readOrders()
+            checkoutController.readOrders(),
+            shippingStore.readRates()
         ]);
+        const staff = await authController.listStaffUsers();
         const now = new Date();
         const currentPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         const previousPeriodStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
@@ -92,8 +103,15 @@ async function showDashboard(req, res, next) {
         res.render("dashboard", {
             products,
             customers,
-            orders,
+            orders: orders.filter((order) => order.salesChannel !== "physical"),
+            allOrders: [...orders].sort((left, right) =>
+                String(right.createdAt || "").localeCompare(String(left.createdAt || ""))
+            ),
+            authUser: req.authUser,
             reports,
+            staff,
+            counties: shippingStore.COUNTIES,
+            shippingRates,
             stats: {
                 grossSales: paidOrders.reduce((total, order) => total + Number(order.total || 0), 0),
                 weeklySales: weeklyPaidOrders.reduce((total, order) => total + Number(order.total || 0), 0),

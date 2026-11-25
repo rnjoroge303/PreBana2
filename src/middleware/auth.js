@@ -4,8 +4,10 @@ const jwt = require("jsonwebtoken");
 const legacyTokenCookieName = "prebana_token";
 const tokenCookieNames = {
     admin: "prebana_admin_token",
-    client: "prebana_client_token"
+    client: "prebana_client_token",
+    staff: "prebana_staff_token"
 };
+const allowedRoles = ["admin", "client", "staff"];
 const developmentSecret = crypto.createHash("sha256")
     .update("prebana-local-development-only")
     .digest("hex");
@@ -34,7 +36,8 @@ function verifyToken(token, expectedRole) {
     }
     try {
         const payload = jwt.verify(token, jwtSecret, { issuer: "prebana-store" });
-        if (!payload.sub || !["admin", "client"].includes(payload.role) || (expectedRole && payload.role !== expectedRole)) {
+        const expectedRoles = Array.isArray(expectedRole) ? expectedRole : expectedRole ? [expectedRole] : null;
+        if (!payload.sub || !allowedRoles.includes(payload.role) || (expectedRoles && !expectedRoles.includes(payload.role))) {
             return null;
         }
         return { id: payload.sub, email: payload.email, role: payload.role };
@@ -45,15 +48,19 @@ function verifyToken(token, expectedRole) {
 
 function verifyRequestUser(req, expectedRole) {
     if (expectedRole) {
-        const roleToken = readCookie(req, tokenCookieNames[expectedRole]);
-        const roleUser = verifyToken(roleToken, expectedRole);
-        if (roleUser) {
-            return roleUser;
+        const expectedRoles = Array.isArray(expectedRole) ? expectedRole : [expectedRole];
+        for (const role of expectedRoles){
+            const roleToken = readCookie(req, tokenCookieNames[role]);
+            const roleUser = verifyToken(roleToken, expectedRoles);
+            if (roleUser){
+                return roleUser;
+            }
         }
-        return verifyToken(readCookie(req, legacyTokenCookieName), expectedRole);
+        return verifyToken(readCookie(req, legacyTokenCookieName), expectedRoles);
     }
 
     return verifyToken(readCookie(req, tokenCookieNames.admin), "admin")
+        || verifyToken(readCookie(req, tokenCookieNames.staff), "staff")
         || verifyToken(readCookie(req, tokenCookieNames.client), "client")
         || verifyToken(readCookie(req, legacyTokenCookieName));
 }
@@ -103,7 +110,8 @@ function requireRole(requiredRole) {
             if (String(req.get("Accept") || "").includes("application/json")) {
                 return res.status(401).json({ error: "Your session has expired. Please sign in again." });
             }
-            return res.redirect(`/pre/${requiredRole}/login`);
+            const loginRole = Array.isArray(requiredRole) ? requiredRole[0] : requiredRole;
+            return res.redirect(`/pre/${loginRole}/login`);
         }
         req.authUser = user;
         res.locals.authUser = user;

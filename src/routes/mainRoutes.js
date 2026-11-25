@@ -4,7 +4,9 @@ const checkoutController = require('../controllers/checkoutController');
 const receiptController = require('../controllers/receiptController');
 const paymentController = require('../controllers/paymentController');
 const productController = require('../controllers/productController');
+const posController = require('../controllers/posController');
 const authController = require('../controllers/authController');
+const shippingController = require('../controllers/shippingController');
 const { requireRole } = require('../middleware/auth');
 const subRoutes = require('./subRoutes');
 const router = express.Router()
@@ -22,6 +24,7 @@ router.post('/logout', authController.logout);
 
 router.get('/checkout', requireRole('client'), checkoutController.showCheckout);
 router.post('/checkout', requireRole('client'), checkoutController.placeOrder);
+router.get('/shipping-rates', requireRole('client'), shippingController.listShippingRates);
 router.post('/orders/:id/mpesa', requireRole('client'), paymentController.initiateOrderPayment);
 router.get('/orders/:id/payment-status', requireRole('client'), paymentController.getOrderPaymentStatus);
 router.get('/orders/:id/receipt', requireRole('client'), async (req, res, next) => {
@@ -110,7 +113,61 @@ router.post('/orders/:id/mpesa-confirmation', requireRole('client'), async (req,
     }
 });
 router.get('/store', productController.showStore);
-router.get('/admin', requireRole('admin'), adminController.showDashboard);
+router.get('/admin', requireRole(['admin', 'staff']), adminController.showDashboard);
+router.post('/admin/pos/sales', requireRole(['admin', 'staff']), posController.createSale);
+router.get('/admin/pos/sales/:id/status', requireRole(['admin', 'staff']), posController.getSalePaymentStatus);
+router.get('/admin/pos/sales/:id/receipt', requireRole(['admin', 'staff']), async (req, res, next) => {
+    try {
+        const order = await checkoutController.getOrderById(req.params.id);
+        if (!order || order.salesChannel !== 'physical') {
+            return res.status(404).send('Sale not found.');
+        }
+        if (order.paymentStatus !== 'paid') {
+            return res.status(409).send('A receipt is available after payment is confirmed.');
+        }
+        return res.type('html').send(receiptController.buildThermalReceiptHtml(order, {
+            receiptTitle: 'Point of sale receipt',
+            pdfUrl: `/pre/admin/pos/sales/${encodeURIComponent(order.id)}/receipt.pdf`,
+            backUrl: '/pre/admin#pos',
+            backLabel: 'Back to point of sale'
+        }));
+    } catch (error) {
+        return next(error);
+    }
+});
+router.get('/admin/pos/sales/:id/receipt.pdf', requireRole(['admin', 'staff']), async (req, res, next) => {
+    try {
+        const order = await checkoutController.getOrderById(req.params.id);
+        if (!order || order.salesChannel !== 'physical') {
+            return res.status(404).send('Sale not found.');
+        }
+        if (order.paymentStatus !== 'paid') {
+            return res.status(409).send('A receipt is available after payment is confirmed.');
+        }
+        const pdf = await receiptController.buildThermalReceiptPdf(order, {
+            receiptTitle: 'POINT OF SALE RECEIPT'
+        });
+        const safeOrderId = String(order.id).replace(/[^a-zA-Z0-9_-]/g, '');
+        return res
+            .type('application/pdf')
+            .attachment(`PreBana-pos-receipt-${safeOrderId}.pdf`)
+            .send(pdf);
+    } catch (error) {
+        return next(error);
+    }
+});
+router.get('/admin/reports/daily', requireRole(['admin', 'staff']), posController.getDailySalesReport);
+router.get('/admin/reports/daily/pdf', requireRole(['admin', 'staff']), posController.downloadDailySalesReportPdf);
+router.get('/admin/staff', requireRole('admin'), async (req, res, next) => {
+    try {
+        return res.json({ staff: await authController.listStaffUsers() });
+    } catch (error) {
+        return next(error);
+    }
+});
+router.post('/admin/staff', requireRole('admin'), authController.createStaffAccount);
+router.get('/admin/shipping', requireRole('admin'), shippingController.listShippingRates);
+router.put('/admin/shipping', requireRole('admin'), shippingController.updateShippingRates);
 router.get('/admin/orders/payment-status', requireRole('admin'), async (req, res, next) => {
     try {
         res.set('Cache-Control', 'no-store');

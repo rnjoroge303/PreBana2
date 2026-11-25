@@ -1,0 +1,224 @@
+<section class="dailyReportSection" aria-labelledby="dailyReportTitle">
+    <div class="panelIntro">
+        <div>
+            <p class="panelEyebrow">DAILY CLOSE</p>
+            <h2 id="dailyReportTitle">Daily sales report</h2>
+            <p class="panelDescription">Paid sales by channel and payment type. Dates use Africa/Nairobi time.</p>
+        </div>
+        <div class="dailyReportActions">
+            <label class="dailyDateField">Sales date
+                <input type="date" id="dailyReportDate">
+            </label>
+            <button class="primaryAction" id="generateDailyReport" type="button">Generate report</button>
+            <button class="secondaryAction" id="exportDailyReport" type="button" disabled>Download CSV</button>
+            <button class="secondaryAction" id="exportDailyReportPdf" type="button">Download PDF report</button>
+        </div>
+    </div>
+    <p class="formFeedback" id="dailyReportFeedback" role="status" aria-live="polite"></p>
+    <div class="dailyReportMetrics" id="dailyReportMetrics" aria-live="polite"></div>
+    <div class="dashboardGrid dailyReportGrid">
+        <section class="adminCard tableCard">
+            <div class="tableToolbar"><div><h3>Physical sales by payment</h3><p>Cash and M-Pesa taken in store</p></div></div>
+            <div class="tableScroll">
+                <table class="dataTable">
+                    <thead><tr><th>Payment</th><th>Transactions</th><th>Sales</th></tr></thead>
+                    <tbody id="dailyPaymentRows"><tr><td colspan="3">Generate a report to view sales.</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+        <section class="adminCard tableCard">
+            <div class="tableToolbar"><div><h3>Physical sales by seller</h3><p>Recorded operator for each sale</p></div></div>
+            <div class="tableScroll">
+                <table class="dataTable">
+                    <thead><tr><th>Admin / staff</th><th>Sales</th><th>Total</th></tr></thead>
+                    <tbody id="dailySellerRows"><tr><td colspan="3">Generate a report to view sellers.</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <section class="adminCard tableCard dailyTransactions">
+        <div class="tableToolbar"><div><h3>Transactions</h3><p>All confirmed online and physical sales for the selected date</p></div></div>
+        <div class="tableScroll">
+            <table class="dataTable">
+                <thead><tr><th>Paid at</th><th>Sale</th><th>Channel</th><th>Payment</th><th>Seller</th><th>Amount</th></tr></thead>
+                <tbody id="dailyTransactionRows"><tr><td colspan="6">Generate a report to view transactions.</td></tr></tbody>
+            </table>
+        </div>
+    </section>
+</section>
+<script>
+    (() => {
+        const dateInput = document.getElementById("dailyReportDate");
+        const generateButton = document.getElementById("generateDailyReport");
+        const exportButton = document.getElementById("exportDailyReport");
+        const exportPdfButton = document.getElementById("exportDailyReportPdf");
+        const feedback = document.getElementById("dailyReportFeedback");
+        const metrics = document.getElementById("dailyReportMetrics");
+        const paymentRows = document.getElementById("dailyPaymentRows");
+        const sellerRows = document.getElementById("dailySellerRows");
+        const transactionRows = document.getElementById("dailyTransactionRows");
+        if (!dateInput) return;
+
+        let currentReport = null;
+        const currency = (amount) => `KSh ${Number(amount || 0).toLocaleString("en-KE")}`;
+        const todayInNairobi = () => {
+            const parts = new Intl.DateTimeFormat("en-CA", {
+                timeZone: "Africa/Nairobi",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit"
+            }).formatToParts(new Date());
+            const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+            return `${values.year}-${values.month}-${values.day}`;
+        };
+        const cell = (row, value) => {
+            const element = document.createElement("td");
+            element.textContent = String(value);
+            row.append(element);
+        };
+        const setEmpty = (target, columns, message) => {
+            const row = document.createElement("tr");
+            const item = document.createElement("td");
+            item.colSpan = columns;
+            item.textContent = message;
+            row.append(item);
+            target.replaceChildren(row);
+        };
+
+        function renderReport(report){
+            const summary = report.summary;
+            metrics.replaceChildren();
+            const cards = [
+                ["Total sales", summary.transactionCount, currency(summary.revenue)],
+                ["Online", summary.online.transactionCount, currency(summary.online.revenue)],
+                ["Physical", summary.physical.transactionCount, currency(summary.physical.revenue)],
+                ["Physical cash / M-Pesa", `${summary.physical.cash.transactionCount} / ${summary.physical.mpesa.transactionCount}`, `${currency(summary.physical.cash.revenue)} / ${currency(summary.physical.mpesa.revenue)}`]
+            ];
+            for (const [title, count, amount] of cards){
+                const card = document.createElement("article");
+                card.className = "metricCard";
+                const label = document.createElement("span");
+                const value = document.createElement("strong");
+                const detail = document.createElement("p");
+                label.textContent = title;
+                value.textContent = String(count);
+                detail.textContent = amount;
+                card.append(label, value, detail);
+                metrics.append(card);
+            }
+
+            const paymentEntries = [
+                ["Cash", summary.physical.cash],
+                ["M-Pesa", summary.physical.mpesa],
+                ["Other", summary.physical.other]
+            ];
+            if (paymentEntries.some(([, entry]) => entry.transactionCount)){
+                paymentRows.replaceChildren();
+                paymentEntries.filter(([, entry]) => entry.transactionCount).forEach(([name, entry]) => {
+                    const row = document.createElement("tr");
+                    cell(row, name);
+                    cell(row, entry.transactionCount);
+                    cell(row, currency(entry.revenue));
+                    paymentRows.append(row);
+                });
+            } else {
+                setEmpty(paymentRows, 3, "No physical sales for this date.");
+            }
+
+            if (report.sellers.length){
+                sellerRows.replaceChildren();
+                report.sellers.forEach((seller) => {
+                    const row = document.createElement("tr");
+                    cell(row, seller.seller);
+                    cell(row, seller.transactionCount);
+                    cell(row, currency(seller.revenue));
+                    sellerRows.append(row);
+                });
+            } else {
+                setEmpty(sellerRows, 3, "No attributed physical sales for this date.");
+            }
+
+            if (report.sales.length){
+                transactionRows.replaceChildren();
+                report.sales.forEach((sale) => {
+                    const row = document.createElement("tr");
+                    const paidAt = new Date(sale.paidAt).toLocaleTimeString("en-KE", {
+                        timeZone: "Africa/Nairobi",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    });
+                    cell(row, paidAt);
+                    cell(row, sale.id);
+                    cell(row, sale.channel);
+                    cell(row, sale.payment);
+                    cell(row, sale.soldBy);
+                    cell(row, currency(sale.amount));
+                    transactionRows.append(row);
+                });
+            } else {
+                setEmpty(transactionRows, 6, "No paid sales for this date.");
+            }
+        }
+
+        async function loadReport(){
+            if (!dateInput.value){
+                feedback.textContent = "Choose a report date.";
+                return;
+            }
+            generateButton.disabled = true;
+            exportButton.disabled = true;
+            feedback.textContent = "Generating daily report...";
+            try{
+                const response = await fetch(`/pre/admin/reports/daily?date=${encodeURIComponent(dateInput.value)}`, { cache: "no-store" });
+                const report = await response.json();
+                if (!response.ok) throw new Error(report.error || "Could not generate the report.");
+                currentReport = report;
+                renderReport(report);
+                feedback.textContent = `${report.date} · ${report.timezone}`;
+                feedback.classList.remove("formFeedbackError");
+                exportButton.disabled = report.sales.length === 0;
+            } catch(error){
+                currentReport = null;
+                feedback.textContent = error.message;
+                feedback.classList.add("formFeedbackError");
+            } finally{
+                generateButton.disabled = false;
+            }
+        }
+
+        generateButton.addEventListener("click", loadReport);
+        exportButton.addEventListener("click", () => {
+            if (!currentReport) return;
+            const values = [
+                ["Paid at (Africa/Nairobi)", "Sale", "Channel", "Payment", "Seller", "Amount (KSh)"],
+                ...currentReport.sales.map((sale) => [
+                    new Date(sale.paidAt).toLocaleString("en-KE", { timeZone: "Africa/Nairobi" }),
+                    sale.id,
+                    sale.channel,
+                    sale.payment,
+                    sale.soldBy,
+                    sale.amount
+                ])
+            ];
+            const csv = values.map((row) => row.map((value) =>
+                `"${String(value).replace(/"/g, '""')}"`
+            ).join(",")).join("\r\n");
+            const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `prebana-sales-${currentReport.date}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+        exportPdfButton.addEventListener("click", () => {
+            if (!dateInput.value) {
+                feedback.textContent = "Choose a report date.";
+                return;
+            }
+            window.open(`/pre/admin/reports/daily/pdf?date=${encodeURIComponent(dateInput.value)}`, "_blank", "noopener,noreferrer");
+        });
+
+        dateInput.value = todayInNairobi();
+        loadReport();
+    })();
+</script>

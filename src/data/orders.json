@@ -1,1 +1,36 @@
-{}
+{
+  "orders": [
+    {
+      "id": "PB-POS-20261125-3C7BF7",
+      "customer": {
+        "name": "pollet anyango juma",
+        "email": null,
+        "phone": "",
+        "address": ""
+      },
+      "paymentPhone": "",
+      "items": [
+        {
+          "productId": "PB-20261125-80CA13",
+          "name": "Amara Coco Butter",
+          "quantity": 2,
+          "unitPrice": 180,
+          "lineTotal": 360
+        }
+      ],
+      "total": 360,
+      "status": "processing",
+      "paymentStatus": "paid",
+      "paymentMethod": "Cash",
+      "paymentConfirmedAt": "2026-11-25T20:24:53.552Z",
+      "inventoryDeducted": true,
+      "salesChannel": "physical",
+      "soldBy": {
+        "userId": "f67adbdb-c64e-4704-a6fb-645af3a57d7a",
+        "email": "prebana@gmail.com",
+        "role": "admin"
+      },
+      "createdAt": "2026-11-25T20:24:53.552Z"
+    }
+  ]
+}

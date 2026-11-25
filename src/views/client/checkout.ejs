@@ -66,6 +66,13 @@
                                 placeholder="e.g. +254 712 345 678" disabled>
                         </div>
                     </fieldset>
+                    <label for="deliveryCounty">County</label>
+                    <select id="deliveryCounty" name="county" required>
+                        <option value="">Choose your county</option>
+                        <% (typeof counties !== "undefined" ? counties : []).forEach((county) => { %>
+                            <option value="<%= county %>"><%= county %></option>
+                        <% }); %>
+                    </select>
                     <label for="deliveryAddress">Delivery address</label>
                     <textarea id="deliveryAddress" name="address" autocomplete="street-address" rows="3" maxlength="300"
                         required placeholder="Building, street, area, and town"></textarea>
@@ -91,7 +98,7 @@
                 <div class="checkoutItems" id="checkoutItems"></div>
                 <div class="checkoutTotals">
                     <div><span>Subtotal</span><strong id="orderSubtotal">KSh 0</strong></div>
-                    <div><span>Delivery</span><strong>Confirmed after order</strong></div>
+                    <div><span>Delivery</span><strong id="orderShippingFee">Choose a county</strong></div>
                     <div class="checkoutGrandTotal"><span>Order total</span><strong id="orderTotal">KSh 0</strong></div>
                 </div>
             </aside>
@@ -137,9 +144,12 @@
         </section>
         <script type="application/json"
             id="catalogData"><%- JSON.stringify(products).replace(/</g, '\\u003c') %></script>
+        <script type="application/json"
+            id="shippingData"><%- JSON.stringify(typeof shippingRates !== "undefined" ? shippingRates : {}).replace(/</g, '\\u003c') %></script>
     </main>
     <script>
         const catalog = JSON.parse(document.getElementById("catalogData").textContent);
+        const shippingRates = JSON.parse(document.getElementById("shippingData").textContent);
         const productById = new Map(catalog.map((product) => [product.id, product]));
         const cartStorageKey = "prebanaCart";
         const checkoutForm = document.getElementById("checkoutForm");
@@ -161,6 +171,8 @@
         const ownPaymentPhoneInput = document.getElementById("ownPaymentPhone");
         const ownPaymentPhoneField = document.getElementById("ownPaymentPhoneField");
         const deliveryPhonePreview = document.getElementById("deliveryPhonePreview");
+        const deliveryCountyInput = document.getElementById("deliveryCounty");
+        const orderShippingFee = document.getElementById("orderShippingFee");
         let currentOrderId = null;
         let cart = [];
 
@@ -212,6 +224,18 @@
                 ownPaymentPhoneInput.required = useOwnPhone;
                 if (useOwnPhone) ownPaymentPhoneInput.focus();
             });
+        });
+
+        function currentShippingFee(){
+            return Number(shippingRates[deliveryCountyInput.value] || 0);
+        }
+
+        deliveryCountyInput.addEventListener("change", () => {
+            const fee = currentShippingFee();
+            orderShippingFee.textContent = deliveryCountyInput.value
+                ? formatPrice(fee)
+                : "Choose a county";
+            updateCart();
         });
 
         function updateCart() {
@@ -270,7 +294,9 @@
 
             document.getElementById("summaryCount").textContent = `${itemCount} ${itemCount === 1 ? "item" : "items"}`;
             document.getElementById("orderSubtotal").textContent = formatPrice(subtotal);
-            document.getElementById("orderTotal").textContent = formatPrice(subtotal);
+            const shippingFee = currentShippingFee();
+            orderShippingFee.textContent = deliveryCountyInput.value ? formatPrice(shippingFee) : "Choose a county";
+            document.getElementById("orderTotal").textContent = formatPrice(subtotal + shippingFee);
             placeOrderButton.disabled = itemCount === 0;
             if (!itemCount) {
                 const empty = document.createElement("p");
@@ -319,6 +345,7 @@
                         phone: formData.get("phone"),
                         paymentPhone: selectedPaymentPhone(),
                         address: formData.get("address"),
+                        county: formData.get("county"),
                         note: formData.get("note"),
                         items: cart
                     })

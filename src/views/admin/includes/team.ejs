@@ -1,0 +1,80 @@
+<div class="panelIntro">
+    <div>
+        <p class="panelEyebrow">ACCESS</p>
+        <h2>Staff accounts</h2>
+        <p class="panelDescription">Create sign-in accounts for staff who record in-store sales.</p>
+    </div>
+</div>
+<div class="teamLayout">
+    <section class="adminCard teamFormCard">
+        <h3>Add a staff account</h3>
+        <form id="staffAccountForm">
+            <label class="posField">Staff email
+                <input type="email" name="email" autocomplete="username" required maxlength="254">
+            </label>
+            <label class="posField">Password
+                <input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="72" required>
+            </label>
+            <label class="posField">Confirm password
+                <input type="password" name="confirmPassword" autocomplete="new-password" minlength="8" maxlength="72" required>
+            </label>
+            <button class="primaryAction" id="createStaffButton" type="submit">Create staff account</button>
+            <p class="formFeedback" id="staffFormFeedback" role="status" aria-live="polite"></p>
+        </form>
+    </section>
+    <section class="adminCard tableCard">
+        <div class="tableToolbar"><div><h3>Staff</h3><p id="staffCount"><%= staff.length %> accounts</p></div></div>
+        <div class="tableScroll">
+            <table class="dataTable">
+                <thead><tr><th>Email</th><th>Created</th></tr></thead>
+                <tbody id="staffTableBody">
+                    <% staff.forEach((member)=> { %>
+                        <tr><td><%= member.email %></td><td><%= new Date(member.createdAt).toLocaleDateString("en-KE") %></td></tr>
+                    <% }); %>
+                    <% if (!staff.length) { %><tr id="staffEmptyRow"><td colspan="2">No staff accounts yet.</td></tr><% } %>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+<script>
+    (() => {
+        const form = document.getElementById("staffAccountForm");
+        if (!form) return;
+        const button = document.getElementById("createStaffButton");
+        const feedback = document.getElementById("staffFormFeedback");
+        const tableBody = document.getElementById("staffTableBody");
+        const staffCount = document.getElementById("staffCount");
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            button.disabled = true;
+            feedback.textContent = "Creating account...";
+            feedback.classList.remove("formFeedbackError");
+            try{
+                const response = await fetch("/pre/admin/staff", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Could not create staff account.");
+                document.getElementById("staffEmptyRow")?.remove();
+                const row = document.createElement("tr");
+                const email = document.createElement("td");
+                const created = document.createElement("td");
+                email.textContent = result.staff.email;
+                created.textContent = new Date(result.staff.createdAt).toLocaleDateString("en-KE");
+                row.append(email, created);
+                tableBody.prepend(row);
+                staffCount.textContent = `${tableBody.querySelectorAll("tr").length} accounts`;
+                form.reset();
+                feedback.textContent = "Staff account created. They can sign in at the admin login page.";
+            } catch(error){
+                feedback.textContent = error.message;
+                feedback.classList.add("formFeedbackError");
+            } finally{
+                button.disabled = false;
+            }
+        });
+    })();
+</script>

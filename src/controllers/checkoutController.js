@@ -1,6 +1,7 @@
 const crypto = require("node:crypto");
 const productController = require("./productController");
 const orderStore = require("../models/orderStore");
+const shippingStore = require("../models/shippingStore");
 
 const { readOrders } = orderStore;
 
@@ -63,6 +64,7 @@ function buildShippingLabelHtml(order) {
         <div><strong>Order ID:</strong> ${escapeHtml(order.id)}</div>
         <div><strong>Customer:</strong> ${escapeHtml(order.customer?.name || "N/A")}</div>
         <div><strong>Phone:</strong> ${escapeHtml(order.customer?.phone || "N/A")}</div>
+        <div><strong>County:</strong> ${escapeHtml(order.shippingCounty || order.customer?.county || "N/A")}</div>
       </div>
       <div class="meta">
         <div><strong>Payment:</strong> ${escapeHtml(order.paymentStatus || "pending")}</div>
@@ -341,7 +343,9 @@ async function showCheckout(req, res, next) {
         const products = await productController.readProducts();
         res.render("checkout", {
             products,
-            customerEmail: req.authUser.email
+            customerEmail: req.authUser.email,
+            counties: shippingStore.COUNTIES,
+            shippingRates: await shippingStore.readRates()
         });
     } catch (error) {
         next(error);
@@ -354,6 +358,7 @@ async function placeOrder(req, res, next) {
         const phone = String(req.body.phone || "").trim();
         const paymentPhone = String(req.body.paymentPhone || phone).trim();
         const address = String(req.body.address || "").trim();
+        const county = String(req.body.county || "").trim();
         const note = String(req.body.note || "").trim();
         const cart = normalizeCart(req.body.items);
 
@@ -369,6 +374,9 @@ async function placeOrder(req, res, next) {
         if (!address || address.length > 300) {
             return res.status(400).json({ error: "Enter a delivery address (up to 300 characters)." });
         }
+        if (!shippingStore.COUNTIES.includes(county)) {
+            return res.status(400).json({ error: "Choose a valid delivery county." });
+        }
         if (note.length > 500) {
             return res.status(400).json({ error: "Order note must be 500 characters or fewer." });
         }
@@ -381,6 +389,9 @@ async function placeOrder(req, res, next) {
             return res.status(409).json({ error: stockCheck.error });
         }
         const items = stockCheck.itemsForOrder;
+        const shippingRates = await shippingStore.readRates();
+        const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+        const shippingFee = Number(shippingRates[county] || 0);
 
         const order = {
             id: `PB-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
@@ -389,16 +400,21 @@ async function placeOrder(req, res, next) {
                 name: customerName,
                 email: req.authUser.email,
                 phone,
-                address
+                address,
+                county
             },
             paymentPhone,
             items,
-            total: items.reduce((sum, item) => sum + item.lineTotal, 0),
+            subtotal,
+            shippingFee,
+            shippingCounty: county,
+            total: subtotal + shippingFee,
             note,
             status: "received",
             paymentStatus: "pending",
             paymentMethod: "pending confirmation",
             inventoryDeducted: false,
+            salesChannel: "online",
             createdAt: new Date().toISOString()
         };
 
@@ -414,6 +430,9 @@ async function listCustomers() {
     const orders = await readOrders();
     const customersById = new Map();
     for (const order of orders) {
+        if (order.salesChannel === "physical" || !order.customer){
+            continue;
+        }
         const key = order.customer.userId || order.customer.email;
         let customer = customersById.get(key);
         if (!customer) {

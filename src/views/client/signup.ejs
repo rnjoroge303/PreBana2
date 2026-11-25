@@ -31,9 +31,9 @@
                     <label for="email">Email address</label>
                     <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
                     <label for="password">Password</label>
-                    <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required placeholder="At least 12 characters">
+                    <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="At least 8 characters">
                     <label for="confirmPassword">Confirm password</label>
-                    <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="12" required placeholder="Enter your password again">
+                    <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="Enter your password again">
                     <button class="authSubmit" type="submit">Create account <span aria-hidden="true">→</span></button>
                 </form>
                 <p class="authSwitch">Already have an account? <a href="/pre/client/login?next=<%= encodeURIComponent(next || '') %>">Sign in</a></p>

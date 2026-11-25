@@ -1,0 +1,190 @@
+<script>
+    (() => {
+        const form = document.getElementById("posSaleForm");
+        const productSearch = document.getElementById("posProductSearch");
+        const productSelect = document.getElementById("posProductSelect");
+        const quantityInput = document.getElementById("posQuantity");
+        const addButton = document.getElementById("posAddItem");
+        const rows = document.getElementById("posCartRows");
+        const totalLabel = document.getElementById("posCartTotal");
+        const methodSelect = document.getElementById("posPaymentMethod");
+        const phoneField = document.getElementById("posMpesaPhoneField");
+        const phoneInput = document.getElementById("posPaymentPhone");
+        const feedback = document.getElementById("posFeedback");
+        const submitButton = document.getElementById("posSubmit");
+        const paymentHint = document.getElementById("posPaymentHint");
+        const cart = new Map();
+        const productData = document.getElementById("posProductData");
+        const posProducts = JSON.parse(productData.dataset.products);
+        const currency = (amount) => `KSh ${Number(amount || 0).toLocaleString("en-KE")}`;
+
+        if (!form) return;
+
+        function renderCart(){
+            rows.replaceChildren();
+            if (!cart.size){
+                const emptyRow = document.createElement("tr");
+                const emptyCell = document.createElement("td");
+                emptyCell.colSpan = 5;
+                emptyCell.textContent = "Add products to start a sale.";
+                emptyRow.append(emptyCell);
+                rows.append(emptyRow);
+                totalLabel.textContent = currency(0);
+                submitButton.disabled = true;
+                return;
+            }
+            let total = 0;
+            for (const [productId, entry] of cart){
+                const row = document.createElement("tr");
+                const nameCell = document.createElement("td");
+                const quantityCell = document.createElement("td");
+                const priceCell = document.createElement("td");
+                const totalCell = document.createElement("td");
+                const actionCell = document.createElement("td");
+                const removeButton = document.createElement("button");
+                const lineTotal = entry.product.price * entry.quantity;
+                nameCell.textContent = entry.product.name;
+                quantityCell.textContent = String(entry.quantity);
+                priceCell.textContent = currency(entry.product.price);
+                totalCell.textContent = currency(lineTotal);
+                removeButton.type = "button";
+                removeButton.className = "rowAction";
+                removeButton.textContent = "Remove";
+                removeButton.setAttribute("aria-label", `Remove ${entry.product.name}`);
+                removeButton.addEventListener("click", () => {
+                    cart.delete(productId);
+                    renderCart();
+                });
+                actionCell.append(removeButton);
+                row.append(nameCell, quantityCell, priceCell, totalCell, actionCell);
+                rows.append(row);
+                total += lineTotal;
+            }
+            totalLabel.textContent = currency(total);
+            submitButton.disabled = false;
+        }
+
+        function setPaymentMethod(){
+            const isMpesa = methodSelect.value === "mpesa";
+            phoneField.hidden = !isMpesa;
+            phoneInput.required = isMpesa;
+            paymentHint.textContent = isMpesa
+                ? "An STK prompt will be sent to this phone. The sale is confirmed after payment is received."
+                : "Cash sales are recorded as paid immediately.";
+            submitButton.textContent = isMpesa ? "Send M-Pesa prompt" : "Complete cash sale";
+        }
+
+        productSearch.addEventListener("input", () => {
+            const searchTerm = productSearch.value.trim().toLowerCase();
+            let firstAvailableOption = null;
+            for (const option of productSelect.options){
+                const product = posProducts.find((entry) => entry.id === option.value);
+                const matches = !searchTerm || (
+                    String(product?.name || "").toLowerCase().includes(searchTerm)
+                    || String(option.value).toLowerCase().includes(searchTerm)
+                );
+                option.hidden = !matches;
+                if (matches && product?.stock > 0 && !firstAvailableOption){
+                    firstAvailableOption = option;
+                }
+            }
+            const currentOption = productSelect.selectedOptions[0];
+            if (!currentOption || currentOption.hidden || currentOption.disabled){
+                productSelect.value = firstAvailableOption?.value || "";
+            }
+        });
+
+        addButton.addEventListener("click", () => {
+            const option = productSelect.selectedOptions[0];
+            const product = posProducts.find((entry) => entry.id === productSelect.value);
+            const quantity = Number(quantityInput.value);
+            if (!product || !Number.isInteger(quantity) || quantity < 1){
+                feedback.textContent = "Choose a product and a valid quantity.";
+                return;
+            }
+            if (quantity > 99){
+                feedback.textContent = "A single sale line can contain at most 99 units.";
+                return;
+            }
+            const nextQuantity = (cart.get(product.id)?.quantity || 0) + quantity;
+            if (nextQuantity > product.stock){
+                feedback.textContent = `${product.name} has only ${product.stock} in stock.`;
+                return;
+            }
+            cart.set(product.id, { product, quantity: nextQuantity });
+            feedback.textContent = "";
+            quantityInput.value = "1";
+            renderCart();
+        });
+
+        methodSelect.addEventListener("change", setPaymentMethod);
+        setPaymentMethod();
+        renderCart();
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            if (!cart.size) return;
+            submitButton.disabled = true;
+            feedback.textContent = methodSelect.value === "mpesa" ? "Sending M-Pesa prompt..." : "Saving cash sale...";
+            feedback.classList.remove("formFeedbackError");
+            try{
+                const body = Object.fromEntries(new FormData(form).entries());
+                body.items = [...cart].map(([productId, entry]) => ({ productId, quantity: entry.quantity }));
+                const response = await fetch("/pre/admin/pos/sales", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Sale could not be completed.");
+
+                cart.clear();
+                form.reset();
+                setPaymentMethod();
+                renderCart();
+                if (result.paymentStatus === "paid"){
+                    feedback.textContent = `Cash sale saved. Total ${currency(result.total)}. `;
+                    const receiptLink = document.createElement("a");
+                    receiptLink.href = result.receiptUrl;
+                    receiptLink.target = "_blank";
+                    receiptLink.rel = "noopener noreferrer";
+                    receiptLink.textContent = "Open receipt";
+                    feedback.append(receiptLink);
+                    return;
+                }
+                feedback.textContent = `${result.customerMessage || "M-Pesa prompt sent."} Waiting for payment confirmation...`;
+                await pollSaleStatus(result.orderId);
+            } catch(error){
+                feedback.textContent = error.message;
+                feedback.classList.add("formFeedbackError");
+            } finally{
+                submitButton.disabled = cart.size === 0;
+            }
+        });
+
+        async function pollSaleStatus(orderId){
+            for (let attempt = 0; attempt < 30; attempt += 1){
+                await new Promise((resolve) => window.setTimeout(resolve, 3000));
+                const response = await fetch(`/pre/admin/pos/sales/${encodeURIComponent(orderId)}/status`, { cache: "no-store" });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Could not check the sale payment.");
+                if (result.paymentStatus === "paid"){
+                    feedback.textContent = "M-Pesa payment confirmed. ";
+                    const receiptLink = document.createElement("a");
+                    receiptLink.href = result.receiptUrl;
+                    receiptLink.target = "_blank";
+                    receiptLink.rel = "noopener noreferrer";
+                    receiptLink.textContent = "Open receipt";
+                    feedback.append(receiptLink);
+                    return;
+                }
+                if (["failed", "cancelled", "review_required"].includes(result.paymentStatus)){
+                    feedback.textContent = result.paymentResultDescription || `M-Pesa payment ${result.paymentStatus.replace(/_/g, " ")}.`;
+                    feedback.classList.add("formFeedbackError");
+                    return;
+                }
+            }
+            feedback.textContent = "Payment is still pending. Check the M-Pesa result before retrying.";
+        }
+    })();
+</script>

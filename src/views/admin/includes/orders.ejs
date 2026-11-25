@@ -1,0 +1,75 @@
+<div class="panelIntro">
+    <div>
+        <p class="panelEyebrow">SALES RECORD</p>
+        <h2>All orders</h2>
+        <p class="panelDescription">Online and physical sales, payment status, seller, and receipt.</p>
+    </div>
+    <span class="secondaryAction staticAction"><%= allOrders.length %> records</span>
+</div>
+<div class="adminCard tableCard">
+    <div class="tableToolbar">
+        <div><h3>Order history</h3><p>Every confirmed and unconfirmed sale</p></div>
+        <label class="smallSearch">
+            <span class="srOnly">Search orders</span>
+            <input id="orderSearch" type="search" placeholder="Search order, customer, channel, or status">
+        </label>
+    </div>
+    <div class="tableScroll">
+        <table class="dataTable">
+            <thead>
+                <tr><th>Order</th><th>Customer</th><th>Channel</th><th>Payment</th><th>Seller</th><th>Status</th><th>Total</th><th>Receipt</th></tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                <% allOrders.forEach((order) => {
+                    const channel = order.salesChannel === "physical" ? "Physical" : "Online";
+                    const statusLabels = { paid: "Paid", pending: "Pending", failed: "Failed", cancelled: "Cancelled", review_required: "Review required" };
+                    const status = statusLabels[order.paymentStatus] || "Pending";
+                    const paymentClass = order.paymentStatus === "paid" ? "statusPaid" : "statusPending";
+                %>
+                <tr>
+                    <td><strong><%= order.id %></strong><small class="orderCreatedAt"><%= new Date(order.createdAt).toLocaleString("en-KE") %></small></td>
+                    <td><%= order.customer?.name || "Walk-in customer" %><small><%= order.customer?.phone || "—" %></small><small><%= order.shippingCounty || order.customer?.county || "—" %></small></td>
+                    <td><span class="statusPill"><%= channel %></span></td>
+                    <td><%= order.paymentMethod || "Pending" %></td>
+                    <td><%= order.salesChannel === "physical" ? (order.soldBy?.email || order.soldBy?.userId || "—") : "—" %></td>
+                    <td><span class="statusPill <%= paymentClass %>"><%= status %></span></td>
+                    <td><strong>KSh <%= Number(order.total || 0).toLocaleString("en-KE") %></strong></td>
+                    <td>
+                        <% if (order.paymentStatus === "paid") { %>
+                            <button type="button" class="rowAction order-receipt" data-order-id="<%= order.id %>" data-channel="<%= order.salesChannel || "online" %>">View receipt</button>
+                        <% } else { %>
+                            <span>Available after payment</span>
+                        <% } %>
+                    </td>
+                </tr>
+                <% }); %>
+                <% if (!allOrders.length) { %>
+                    <tr><td colspan="8">No orders or physical sales have been recorded.</td></tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    (() => {
+        const search = document.getElementById("orderSearch");
+        const rows = document.querySelectorAll("#ordersTableBody tr");
+        if (search){
+            search.addEventListener("input", () => {
+                const query = search.value.trim().toLowerCase();
+                rows.forEach((row) => {
+                    row.hidden = !row.textContent.toLowerCase().includes(query);
+                });
+            });
+        }
+        document.querySelectorAll(".order-receipt").forEach((button) => {
+            button.addEventListener("click", () => {
+                const orderId = encodeURIComponent(button.dataset.orderId);
+                const base = button.dataset.channel === "physical"
+                    ? `/pre/admin/pos/sales/${orderId}/receipt`
+                    : `/pre/admin/orders/${orderId}/receipt`;
+                window.open(base, "_blank", "noopener,noreferrer");
+            });
+        });
+    })();
+</script>

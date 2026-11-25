@@ -1,0 +1,74 @@
+<div class="panelIntro">
+    <div>
+        <p class="panelEyebrow">DELIVERY SETTINGS</p>
+        <h2>County shipping fees</h2>
+        <p class="panelDescription">Set the delivery fee customers pay for each of Kenya's 47 counties.</p>
+    </div>
+    <span class="secondaryAction staticAction"><%= counties.length %> counties</span>
+</div>
+<div class="adminCard">
+    <div class="tableToolbar">
+        <div><h3>Shipping rates</h3><p>Prices are in Kenyan shillings</p></div>
+        <label class="smallSearch">
+            <span class="srOnly">Search counties</span>
+            <input id="shippingSearch" type="search" placeholder="Search county">
+        </label>
+    </div>
+    <form id="shippingRatesForm">
+        <div class="shippingGrid">
+            <% counties.forEach((county) => { %>
+                <label class="posField shippingRateField">
+                    <span><%= county %></span>
+                    <span class="shippingInputPrefix">KSh
+                        <input name="<%= county %>" type="number" min="0" max="100000" step="1"
+                            value="<%= Number(shippingRates[county] || 0) %>" required>
+                    </span>
+                </label>
+            <% }); %>
+        </div>
+        <p class="formFeedback" id="shippingFeedback" role="status" aria-live="polite"></p>
+        <button class="primaryAction" id="saveShippingRates" type="submit">Save all shipping fees</button>
+    </form>
+</div>
+<script>
+    (() => {
+        const form = document.getElementById("shippingRatesForm");
+        const search = document.getElementById("shippingSearch");
+        const feedback = document.getElementById("shippingFeedback");
+        const saveButton = document.getElementById("saveShippingRates");
+        if (!form) return;
+
+        search.addEventListener("input", () => {
+            const query = search.value.trim().toLowerCase();
+            form.querySelectorAll(".shippingRateField").forEach((field) => {
+                field.hidden = !field.textContent.toLowerCase().includes(query);
+            });
+        });
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            saveButton.disabled = true;
+            feedback.textContent = "Saving shipping fees...";
+            feedback.classList.remove("formFeedbackError");
+            try{
+                const rates = {};
+                new FormData(form).forEach((value, county) => {
+                    const fee = Number(value);
+                    rates[county] = Number.isFinite(fee) && fee >= 0 ? fee : 0;
+                });
+                const response = await fetch("/pre/admin/shipping", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ rates })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Could not save shipping fees.");
+                feedback.textContent = "Shipping fees saved for all counties.";
+            } catch(error){
+                feedback.textContent = error.message;
+                feedback.classList.add("formFeedbackError");
+            } finally{
+                saveButton.disabled = false;
+            }
+        });
+    })();
+</script>

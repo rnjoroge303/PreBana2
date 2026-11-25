@@ -1,0 +1,62 @@
+<div class="panelIntro">
+    <div>
+        <p class="panelEyebrow">IN-STORE SALES</p>
+        <h2>Point of sale</h2>
+        <p class="panelDescription">Build a walk-in sale, take cash or send an M-Pesa prompt, and print the receipt.</p>
+    </div>
+</div>
+<div class="posLayout">
+    <section class="adminCard posBuilder" aria-labelledby="posBuilderTitle">
+        <h3 id="posBuilderTitle">Add products</h3>
+        <div class="posAddRow">
+            <label class="posField posSearchField">Search
+                <input id="posProductSearch" type="search" placeholder="Search product name or ID" autocomplete="off">
+            </label>
+            <label class="posField posProductField">Product
+                <select id="posProductSelect">
+                    <% products.forEach((product)=> { %>
+                        <option value="<%= product.id %>" data-stock="<%= product.stock %>" data-price="<%= product.price %>" <%= Number(product.stock) < 1 ? "disabled" : "" %>>
+                            <%= product.name %> · KSh <%= Number(product.price).toLocaleString("en-KE") %> · <%= product.stock %> in stock
+                        </option>
+                    <% }); %>
+                </select>
+            </label>
+            <label class="posField posQuantityField">Qty
+                <input id="posQuantity" type="number" min="1" max="99" value="1" inputmode="numeric">
+            </label>
+            <button class="secondaryAction posAddButton" id="posAddItem" type="button" <%= products.every((product) => Number(product.stock) < 1) ? "disabled" : "" %>>Add item</button>
+        </div>
+        <div class="tableScroll">
+            <table class="dataTable posCartTable">
+                <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th></th></tr></thead>
+                <tbody id="posCartRows"><tr id="posCartEmpty"><td colspan="5">Add products to start a sale.</td></tr></tbody>
+            </table>
+        </div>
+        <div class="posTotal"><span>Total</span><strong id="posCartTotal">KSh 0</strong></div>
+    </section>
+    <section class="adminCard posPayment" aria-labelledby="posPaymentTitle">
+        <h3 id="posPaymentTitle">Take payment</h3>
+        <form id="posSaleForm">
+            <label class="posField">Customer name (optional)
+                <input name="customerName" type="text" maxlength="100" placeholder="Walk-in customer">
+            </label>
+            <label class="posField">Customer phone (optional)
+                <input name="customerPhone" type="tel" maxlength="24" placeholder="07XX XXX XXX">
+            </label>
+            <label class="posField">Payment method
+                <select name="paymentMethod" id="posPaymentMethod">
+                    <option value="cash">Cash</option>
+                    <option value="mpesa">M-Pesa prompt</option>
+                </select>
+            </label>
+            <label class="posField" id="posMpesaPhoneField" hidden>M-Pesa phone
+                <input name="paymentPhone" id="posPaymentPhone" type="tel" maxlength="24" placeholder="07XX XXX XXX" autocomplete="tel">
+            </label>
+            <p class="posPaymentHint" id="posPaymentHint">Cash sales are recorded as paid immediately.</p>
+            <button class="primaryAction posSubmit" id="posSubmit" type="submit">Complete cash sale</button>
+            <p class="formFeedback" id="posFeedback" role="status" aria-live="polite"></p>
+        </form>
+    </section>
+</div>
+<div id="posProductData" hidden data-products="<%= JSON.stringify(products.map(({ id, name, price, stock }) => ({ id, name, price: Number(price), stock: Number(stock) }))) %>"></div>
+<%- include("pos-script") %>

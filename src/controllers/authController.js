@@ -26,7 +26,7 @@ function usesDatabaseStore(){
 
 function normalizeRole(value){
     const role = String(value || "").trim().toLowerCase();
-    return role === "admin" ? "admin" : role === "client" ? "client" : null;
+    return ["admin", "staff", "client"].includes(role) ? role : null;
 }
 
 function normalizeEmail(value){
@@ -43,8 +43,8 @@ function getAdminBootstrapConfig(){
     if (!email && !password){
         return null;
     }
-    if (!isValidEmail(email) || Buffer.byteLength(password, "utf8") < 12 || Buffer.byteLength(password, "utf8") > 72){
-        throw new Error("Configure ADMIN_EMAIL and an ADMIN_PASSWORD between 12 and 72 bytes to create the initial administrator.");
+    if (!isValidEmail(email) || Buffer.byteLength(password, "utf8") < 8 || Buffer.byteLength(password, "utf8") > 72){
+        throw new Error("Configure ADMIN_EMAIL and an ADMIN_PASSWORD between 8 and 72 bytes to create the initial administrator.");
     }
     return { email, password };
 }
@@ -181,13 +181,14 @@ async function readUsers(){
     if (usesDatabaseStore()){
         const pool = await getDatabasePool();
         const [users] = await pool.execute(
-            "SELECT id, email, role, password_hash AS passwordHash FROM prebana_users"
+            "SELECT id, email, role, password_hash AS passwordHash, created_at AS createdAt FROM prebana_users"
         );
         return users.map((user) => ({
             id: user.id,
             email: normalizeEmail(user.email),
             role: normalizeRole(user.role),
-            passwordHash: user.passwordHash
+            passwordHash: user.passwordHash,
+            createdAt: new Date(user.createdAt || Date.now()).toISOString()
         })).filter((user) => user.id && user.email && user.role && user.passwordHash);
     }
 
@@ -196,7 +197,8 @@ async function readUsers(){
         id: entry.id,
         email: normalizeEmail(entry.email || entry.Email),
         role: normalizeRole(entry.role || entry.Role),
-        passwordHash: entry.passwordHash
+        passwordHash: entry.passwordHash,
+        createdAt: entry.createdAt || new Date().toISOString()
     })).filter((user) => user.id && user.email && user.role && user.passwordHash);
 }
 
@@ -273,7 +275,10 @@ async function initializeUserStore(){
 }
 
 function landingForRole(role){
-    return role === "admin" ? "/pre/admin" : "/pre/store";
+    if (role === "admin"){
+        return "/pre/admin";
+    }
+    return role === "staff" ? "/pre/admin#pos" : "/pre/store";
 }
 
 function getPostAuthPath(role, requestedPath){
@@ -293,16 +298,71 @@ function renderSignup(role, res, error = null, status = 200, next = null){
 async function login(req, res, role){
     const email = normalizeEmail(req.body.email);
     const password = String(req.body.password || "");
-    const next = getPostAuthPath(role, req.body.next);
     const users = await readUsers();
-    const user = users.find((entry) => entry.email === email && entry.role === role);
+    const roles = role === "admin" ? ["admin", "staff"] : [role];
+    const user = users.find((entry) => entry.email === email && roles.includes(entry.role));
 
     if (!user || !await bcrypt.compare(password, user.passwordHash)){
-        return renderLogin(role, res, "Email or password is incorrect.", 401, next);
+        return renderLogin(role, res, "Email or password is incorrect.", 401);
     }
 
     issueAuthCookie(res, user);
-    return res.redirect(next);
+    return res.redirect(getPostAuthPath(user.role, req.body.next));
+}
+
+async function createUserAccount(email, password, role){
+    const user = {
+        id: crypto.randomUUID(),
+        email,
+        role,
+        passwordHash: await bcrypt.hash(password, bcryptRounds),
+        createdAt: new Date().toISOString()
+    };
+    return usesDatabaseStore()
+        ? createDatabaseUser(user)
+        : updateUsers((users) => {
+            if (users.some((entry) => entry.email === email)){
+                return { duplicate: true, skipWrite: true };
+            }
+            users.push(user);
+            return { user };
+        });
+}
+
+async function listStaffUsers(){
+    return (await readUsers())
+        .filter((user) => user.role === "staff")
+        .map(({ id, email, createdAt }) => ({ id, email, createdAt }));
+}
+
+async function createStaffAccount(req, res, next){
+    try{
+        const email = normalizeEmail(req.body?.email);
+        const password = String(req.body?.password || "");
+        const confirmPassword = String(req.body?.confirmPassword || "");
+        if (!isValidEmail(email)){
+            return res.status(400).json({ error: "Enter a valid email address." });
+        }
+        if (Buffer.byteLength(password, "utf8") < 8 || Buffer.byteLength(password, "utf8") > 72){
+            return res.status(400).json({ error: "Staff passwords must be 8–72 bytes." });
+        }
+        if (password !== confirmPassword){
+            return res.status(400).json({ error: "The passwords do not match." });
+        }
+        const result = await createUserAccount(email, password, "staff");
+        if (result.duplicate){
+            return res.status(409).json({ error: "An account with that email already exists." });
+        }
+        return res.status(201).json({
+            staff: {
+                id: result.user.id,
+                email: result.user.email,
+                createdAt: result.user.createdAt
+            }
+        });
+    } catch(error){
+        return next(error);
+    }
 }
 
 async function signup(req, res, role){
@@ -315,8 +375,8 @@ async function signup(req, res, role){
     if (!isValidEmail(email)){
         return renderPage("Enter a valid email address.");
     }
-    if (Buffer.byteLength(password, "utf8") < 12){
-        return renderPage("Use a password with at least 12 characters.");
+    if (Buffer.byteLength(password, "utf8") < 8){
+        return renderPage("Use a password with at least 8 characters.");
     }
     if (Buffer.byteLength(password, "utf8") > 72){
         return renderPage("Password must be 72 bytes or fewer.");
@@ -325,28 +385,10 @@ async function signup(req, res, role){
         return renderPage("The passwords do not match.");
     }
 
-    const passwordHash = await bcrypt.hash(password, bcryptRounds);
-    const user = {
-        id: crypto.randomUUID(),
-        email,
-        role,
-        passwordHash,
-        createdAt: new Date().toISOString()
-    };
-    const result = usesDatabaseStore()
-        ? await createDatabaseUser(user)
-        : await updateUsers((users) => {
-            if (users.some((entry) => entry.email === email)){
-                return { duplicate: true, skipWrite: true };
-            }
-            users.push(user);
-            return { user };
-        });
-
+    const result = await createUserAccount(email, password, role);
     if (result.duplicate){
         return renderPage("An account with that email already exists.", 409);
     }
-
     issueAuthCookie(res, result.user);
     return res.redirect(next);
 }
@@ -385,16 +427,17 @@ function signupClient(req, res, next){
 
 function logout(req, res){
     const requestedRole = String(req.body.role || "").trim();
-    const role = requestedRole === "admin" || requestedRole === "client"
+    const role = requestedRole === "admin" || requestedRole === "client" || requestedRole === "staff"
         ? requestedRole
         : verifyRequestUser(req)?.role;
     const legacyUser = role ? verifyLegacyRequestUser(req, role) : null;
     clearAuthCookie(res, role, Boolean(legacyUser));
-    return res.redirect(role === "admin" ? "/pre/admin/login" : "/pre/client/login");
+    return res.redirect(role === "client" ? "/pre/client/login" : "/pre/admin/login");
 }
 
 module.exports = {
     initializeUserStore,
+    createStaffAccount,
     loginAdmin,
     loginClient,
     logout,
@@ -402,6 +445,7 @@ module.exports = {
     showAdminSignup,
     showClientLogin,
     showClientSignup,
+    listStaffUsers,
     signupAdmin,
     signupClient
 };

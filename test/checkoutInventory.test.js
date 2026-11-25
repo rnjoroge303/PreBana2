@@ -74,7 +74,6 @@ test("checkout keeps stock unchanged until payment is confirmed and deducts once
             return [...orders.values()];
         }
     };
-
     require.cache[productPath] = {
         id: productPath,
         filename: productPath,
@@ -107,6 +106,7 @@ test("checkout keeps stock unchanged until payment is confirmed and deducts once
                 phone: "+254712345678",
                 paymentPhone: "+254712345678",
                 address: "Nairobi",
+                county: "Nairobi",
                 items: [{ productId: "PB-TEST-1", quantity: 2 }]
             },
             authUser: { id: "client-1", email: "customer@example.com" }
@@ -139,7 +139,7 @@ test("checkout keeps stock unchanged until payment is confirmed and deducts once
             resultCode: 0,
             resultDescription: "Success",
             receipt: "ABC123",
-            amount: 20,
+            amount: order.total,
             payerName: "M-Pesa Payer"
         };
         await checkoutController.applyMpesaCallback("request-paid", successfulCallback);
